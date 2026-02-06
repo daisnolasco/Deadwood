@@ -10,6 +10,14 @@ public class Board {
     private List<Scene> sceneCards = new ArrayList<Scene>();
 
     public Board() {
+        //Initialize  Board rooms and scenecards
+        this.rooms=new HashMap<>();
+        this.sceneCards=new ArrayList<>();
+        //create board ,find the adjacency of each room  and deal scene cards
+        createBoard();
+        locateAdjacentRooms();
+        initlizeSceneDeck();
+        shuffleDealScene();
 
     }
 
