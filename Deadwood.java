@@ -53,7 +53,7 @@ public class Deadwood {
             System.out.println("Enter Name for Player " + i);
             String playerName = input.nextLine();
             players.add(new Player(playerName, rank, credits, dollars, null));
-        }
+        }input.close();
 
     }
     // main Game loop, loops through each player in list
@@ -66,8 +66,10 @@ public class Deadwood {
 
         while (!gameOver) {
          // main Game loop, loops through each player in list until currentdays=totalDays(gameOver) or player quits game
-
+            gameOver=true;
+   
         }
+
     }
 
     public void validateAction(String playerInput) {
