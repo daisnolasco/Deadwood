@@ -29,7 +29,7 @@ public class Room {
 
     // if room is a set or castingoffice/trailer
     public boolean isSet() {
-        return isSet();
+        return isSet;
     }
 
     // scene and shot details
