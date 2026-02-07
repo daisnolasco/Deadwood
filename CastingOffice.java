@@ -49,7 +49,7 @@ public class CastingOffice {
             return false;
         }
         
-        return true;  // Fixed: Return true if all checks pass
+        return true;  // Return true if all checks pass
     }
 
     // Upgrade player to rank
@@ -105,9 +105,9 @@ public class CastingOffice {
         // Display costs
         office.displayCosts();
         
-        // Create test player - Note: Need to create a Room object for the constructor
-        // For testing, we can create a dummy Room or pass null if allowed by your Room class
-        Room testRoom = new Room("Trailers"); // Assuming Room class has constructor that takes name
+        // testing
+        
+        Room testRoom = new Room("Trailers"); 
         
         Player player = new Player("Test Actor", 1, 50, 100, testRoom);
         
