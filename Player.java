@@ -1,11 +1,17 @@
+//Complete imlementation of player 
 public class Player {
   private String playerName;
-  private int credits = 0;
-  private int dollars = 0;
-  private int rank = 1;
-  private int rehearsalTokens = 0;
+  private int credits;
+  private int dollars ;
+  private int rank ;
+  private int rehearsalTokens;
   private Room currentRoom;
   private Role currentRole;
+
+  public Player(String playerName) {
+    this.playerName = playerName;
+  
+  }
 
   public Player(String playerName, int rank, int credits, int dollars, Room currentRoom) {
     this.playerName = playerName;
@@ -15,82 +21,102 @@ public class Player {
     this.currentRoom = currentRoom;
 
   }
-  /* Player stats getters and setters */
+  /* Player stats getters */
 
   public String getPlayerName() {
     return playerName;
-  }
-
-  public void setPlayerName(String playerName) {
-    this.playerName = playerName;
   }
 
   public int getCredits() {
     return credits;
   }
 
-  public void setCredits(int credits) {
-    this.credits = credits;
-  }
-
   public int getDollars() {
     return dollars;
-  }
-
-  public void setDollars(int dollars) {
-    this.dollars = dollars;
   }
 
   public int getRank() {
     return rank;
   }
 
-  public void setRank(int rank) {
-    this.rank = rank;
-  }
-
-
   public int getRehearsalTokens() {
     return rehearsalTokens;
   }
 
-  public void setReheasalTokens(int rehearsalTokens) {
-    this.rehearsalTokens = rehearsalTokens;
+  public Room getCurrentRoom() {
+    return currentRoom;
   }
 
-  public Role getRole() {
+  public Role getCurrentRole() {
     return currentRole;
   }
 
-  public void setRole(Role currentRole) {
-    this.currentRole = currentRole;
+  // Player stats setters //
+
+  public void setPlayerName(String playerName) {
+    this.playerName = playerName;
   }
 
-  public void setCurrentRole(Room currentRoom) {
-    this.currentRoom = currentRoom;
+  public void setCredits(int credits) {
+    this.credits = credits;
   }
 
-  public Room getRoom() {
-    return currentRoom;
+  public void setDollars(int dollars) {
+    this.dollars = dollars;
+  }
+
+  public void setRank(int rank) {
+    this.rank = rank;
+  }
+
+  public void setRehearsalTokens(int rehearsalTokens) {
+    this.rehearsalTokens = rehearsalTokens;
   }
 
   public void setCurrentRoom(Room currentRoom) {
     this.currentRoom = currentRoom;
   }
 
-    public void resetTokens() {
+  public void setCurrentRole(Role currentRole) {
+    this.currentRole = currentRole;
+  }
+
+  // checks if player is currently working on role
+  public boolean isWorking() {
+    return currentRole != null;
+  }
+
+  // Rehearsal methods
+  public void addRehearsalToken() {
+    this.rehearsalTokens++;
+  }
+
+  public void resetTokens() {
     rehearsalTokens = 0;
-    }
-  public void displayPlayerInfo(){
+  }
+
+  // Managing funds
+  public void addDollars(int amount) {
+    this.dollars += amount;
+  }
+
+  public void addCredits(int amount) {
+    this.credits += amount;
+  }
+//Calc final score  to determine winner 
+  public int playerScore() {
+    return dollars + credits + (5 * rank);
+
+  }
+//Displaying player info
+  public void displayPlayerInfo() {
     System.out.println(playerName + ":");
-    System.out.println("Rank : " + rank );
-    System.out.println(" Credits : " + credits  );
-    System.out.println("Dollars : " + dollars  );
-    System.out.println("Role : " + currentRole  );
-
-
-
-    }
-    
+    System.out.println("Rank : " + rank);
+    System.out.println("Credits : " + credits);
+    System.out.println("Dollars : " + dollars);
+    System.out.println("Rehearsal Tokens : " + rehearsalTokens);
+    System.out.println("set: " + currentRoom.getRoomName());
+     System.out.println("Role : " + currentRole.getRoleName());
+  }
 
 }
