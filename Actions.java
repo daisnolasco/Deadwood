@@ -1,7 +1,7 @@
 //Action class will get playerInput from Deadwood class and it will be validated and excuted in Actions class 
 public class Actions {
     private Board board;
-    private castingOffice castingOffice;
+    private CastingOffice CastingOffice;
     private Dice dice;
 
    

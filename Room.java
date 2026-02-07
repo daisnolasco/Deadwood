@@ -1,18 +1,5 @@
-<<<<<<< HEAD
-// Add this to a separate file or at the bottom of CastingOffice.java for testing
-class Room {
-    private String name;
-    
-    public Room(String name) {
-        this.name = name;
-    }
-    
-    public String getName() {
-        return name;
-    }
-}
-=======
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
 
 public class Room {
     private String roomName;
@@ -43,7 +30,7 @@ public class Room {
 
     // if room is a set or castingoffice/trailer
     public boolean isSet() {
-        return isSet;
+        return isSet();
     }
 
     // scene and shot details
@@ -146,9 +133,8 @@ public class Room {
     }
 
     public void resetRoom() {
-    
+
 
     }
 
 }
->>>>>>> 30f6d5ccaa4b2840c17838f1d493c604e8c186f4
