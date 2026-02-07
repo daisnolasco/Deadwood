@@ -49,7 +49,7 @@ public class CastingOffice {
             return false;
         }
         
-        return true;  // Return true if all checks pass
+        return true;
     }
 
     // Upgrade player to rank
@@ -60,11 +60,9 @@ public class CastingOffice {
 
             if (payType == PaymentType.DOLLARS) {
                 cost = upgradeRankDollars[arrayIndex];
-                // Use setDollars to deduct the cost (since Player class has no deductDollars method)
                 player.setDollars(player.getDollars() - cost);
             } else if (payType == PaymentType.CREDITS) {
                 cost = upgradeRankCredits[arrayIndex];
-                // Use setCredits to deduct the cost (since Player class has no deductCredits method)
                 player.setCredits(player.getCredits() - cost);
             }
             player.setRank(newRank);
@@ -97,53 +95,15 @@ public class CastingOffice {
         return upgradeRankCredits[rank - 2];
     }
 
-    // Add this method inside the CastingOffice class for testing
-    public static void main(String[] args) {
-        // Create CastingOffice
-        CastingOffice office = new CastingOffice();
-        
-        // Display costs
-        office.displayCosts();
-        
-        // testing
-        
-        Room testRoom = new Room("Trailers"); 
-        
-        Player player = new Player("Test Actor", 1, 50, 100, testRoom);
-        
-        System.out.println("\nPlayer: " + player.getPlayerName());
-        System.out.println("Current rank: " + player.getRank());
-        System.out.println("Dollars: " + player.getDollars());
-        System.out.println("Credits: " + player.getCredits());
-        
-        // Test canUpgrade
-        System.out.println("\n--- Testing canUpgrade ---");
-        System.out.println("Can upgrade to rank 2 with dollars? " + 
-            office.canUpgrade(player, 2, PaymentType.DOLLARS));
-        System.out.println("Can upgrade to rank 6 with credits? " + 
-            office.canUpgrade(player, 6, PaymentType.CREDITS));
-        
-        // Test upgradePlayer
-        System.out.println("\n--- Testing upgradePlayer ---");
-        office.upgradePlayer(player, 2, PaymentType.DOLLARS);
-        System.out.println("New rank: " + player.getRank());
-        System.out.println("Remaining dollars: " + player.getDollars());
-        
-        office.upgradePlayer(player, 4, PaymentType.CREDITS);
-        System.out.println("New rank: " + player.getRank());
-        System.out.println("Remaining credits: " + player.getCredits());
-        
-        // Test error cases
-        System.out.println("\n--- Testing error cases ---");
-        Player poorPlayer = new Player("Poor Actor", 1, 1, 2, testRoom);
-        office.upgradePlayer(poorPlayer, 2, PaymentType.DOLLARS);
-        
-        // Try downgrading
-        office.upgradePlayer(player, 3, PaymentType.DOLLARS);
-        
-        // Test getter methods
-        System.out.println("\n--- Testing cost getters ---");
-        System.out.println("Cost for rank 3 (dollars): " + office.getDollarCost(3));
-        System.out.println("Cost for rank 5 (credits): " + office.getCreditCost(5));
+    // Add this method for Actions class integration
+    public boolean validateCanUpgrade(Player player, int newRank) {
+        // Check both payment types
+        PaymentType[] paymentTypes = {PaymentType.DOLLARS, PaymentType.CREDITS};
+        for (PaymentType payType : paymentTypes) {
+            if (canUpgrade(player, newRank, payType)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
