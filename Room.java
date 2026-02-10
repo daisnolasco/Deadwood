@@ -1,5 +1,4 @@
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 public class Room {
     private String roomName;
@@ -7,18 +6,24 @@ public class Room {
     private int remainingShots;
     private Scene currentScene;
     private List<Role> extraroles = new ArrayList<>();
+    private List<Role> availibleExtraroles = new ArrayList<>();
     private List<Player> playersInRoom = new ArrayList<>();
     private List<Room> adjacentRooms = new ArrayList<>();
+     List<Role> availibleRoles = new ArrayList<>();
     private boolean isSet;
+    private boolean isAvailible;
+
+    public Room(String roomName, boolean isSet) {
+        this.roomName = roomName;
+        this.isSet = isSet;
+    }
 
     public Room(String roomName, int totalShots, boolean isSet) {
         this.roomName = roomName;
         this.totalShots = totalShots;
         this.remainingShots = totalShots;
         this.isSet = isSet;
-        this.extraroles = new ArrayList<>();
-        this.playersInRoom = new ArrayList<>();
-        this.adjacentRooms = new ArrayList<>();
+        this.extraroles=extraroles;
 
     }
 
@@ -27,14 +32,13 @@ public class Room {
         return roomName;
     }
 
-
     // if room is a set or castingoffice/trailer
     public boolean isSet() {
-        return isSet();
+        return isSet;
     }
 
     // scene and shot details
-      public int getShotCounters() {
+    public int getShotCounters() {
         return totalShots;
     }
 
@@ -67,10 +71,14 @@ public class Room {
     }
 
     public void removeScene() {
+        if(currentScene!=null){
+            currentScene.resetScene();
+        }
         this.remainingShots = 0;
         this.currentScene = null;
+  
 
-    }  
+    }
 
     // Role methods
     public void addExtraRole(Role extra) {
@@ -83,24 +91,42 @@ public class Room {
 
     }
 
+    public List<Role> getAvailibleExtraRoles() {
+
+        // for-loop for extra roles in role and returns unoccupied roles
+        for (Role extra : getExtraRole()) {
+            if (!extra.isOccupied())
+                availibleExtraroles.add(extra);
+        }
+        return availibleExtraroles;
+    }
+
     public List<Role> getAllRoles() {
         List<Role> allRoles = new ArrayList<>();
-        // adds all extra and star roles to set of all roles in room
+        // combines star and extra roles
         allRoles.addAll(extraroles);
-        allRoles.addAll(currentScene.getStarRoles());
+        if (currentScene != null) {
+            allRoles.addAll(currentScene.getStarRoles());
+        }
+
         return allRoles;
 
     }
 
     public List<Role> getAvailibleRoles() {
-        List<Role> availibleRoles = new ArrayList<>();
-        // for loop ,getting all roles in room and return non occupied roles
+        for (Role roles : getAllRoles()) {
+            if (!roles.isOccupied()) {
+                availibleRoles.add(roles);
+            }
+
+        }
         return availibleRoles;
     }
 
     // adding players to room
     public List<Player> getPlayersInRoom() {
         return playersInRoom;
+
     }
 
     public void addPlayer(Player player) {
@@ -122,18 +148,39 @@ public class Room {
     public boolean isAdjacent(Room otherRoom) {
         return adjacentRooms.contains(otherRoom);
     }
+   
 
-    public void setAdjacent(List<Room> rooms) {
-        this.adjacentRooms = rooms;
-    }
+  
 
     public void addAdjacentRooms(Room room) {
         adjacentRooms.add(room);
 
     }
 
-    public void resetRoom() {
+    public void displaySetInfo() {
+        System.out.println("Room Name: " + roomName);
+        System.out.println("Remaining Shots: " + remainingShots);
+        if (currentScene != null) {
+            currentScene.displaySceneInfo();
+            System.out.println("Extra Roles:");
+            for (Role extra : getAvailibleExtraRoles()) {
+                extra.displayRole();
 
+            }
+        } else {
+            System.out.println("Scene is complete");
+        }
+        
+
+    }
+
+    public void displayNieghbors() {
+        System.out.println(getRoomName());
+        for(Room neighbors: getAdjacentRooms()){
+            System.out.println(neighbors.getRoomName() + neighbors.hasActiveScene());
+        }
+  
+        
 
     }
 
