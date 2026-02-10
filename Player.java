@@ -2,23 +2,20 @@
 public class Player {
   private String playerName;
   private int credits;
-  private int dollars ;
-  private int rank ;
+  private int dollars;
+  private int rank;
   private int rehearsalTokens;
   private Room currentRoom;
   private Role currentRole;
-
-  public Player(String playerName) {
-    this.playerName = playerName;
-  
-  }
 
   public Player(String playerName, int rank, int credits, int dollars, Room currentRoom) {
     this.playerName = playerName;
     this.rank = rank;
     this.credits = credits;
     this.dollars = dollars;
+    this.rehearsalTokens = 0;
     this.currentRoom = currentRoom;
+    this.currentRole = null;
 
   }
   /* Player stats getters */
@@ -79,6 +76,7 @@ public class Player {
 
   public void setCurrentRole(Role currentRole) {
     this.currentRole = currentRole;
+    resetTokens();
   }
 
   // checks if player is currently working on role
@@ -86,9 +84,14 @@ public class Player {
     return currentRole != null;
   }
 
+  public void leaveRole() {
+    this.currentRole = null;
+    resetTokens();
+  }
+
   // Rehearsal methods
   public void addRehearsalToken() {
-    this.rehearsalTokens++;
+    rehearsalTokens++;
   }
 
   public void resetTokens() {
@@ -103,20 +106,31 @@ public class Player {
   public void addCredits(int amount) {
     this.credits += amount;
   }
-//Calc final score  to determine winner 
+
+  // Calc final score to determine winner
   public int playerScore() {
     return dollars + credits + (5 * rank);
 
   }
-//Displaying player info
+
+  // Displaying player info
   public void displayPlayerInfo() {
     System.out.println(playerName + ":");
     System.out.println("Rank : " + rank);
     System.out.println("Credits : " + credits);
     System.out.println("Dollars : " + dollars);
     System.out.println("Rehearsal Tokens : " + rehearsalTokens);
-    System.out.println("set: " + currentRoom.getRoomName());
-     System.out.println("Role : " + currentRole.getRoleName());
+    if (currentRoom != null) {
+      System.out.println("set: " + currentRoom.getRoomName());
+    } else {
+      System.out.println("set: none");
+    }
+    if (currentRole != null) {
+      System.out.println("Role : " + currentRole.getRoleName());
+    } else {
+      System.out.println("Role : none");
+    }
+
   }
 
 }
