@@ -9,6 +9,7 @@ public class Role {
         this.roleName = roleName;
         this.line = line;
         this.requiredRank = requiredRank;
+        this.isStarringRole=isStarringRole;
         this.assignedPlayer=null;
 
     }
@@ -50,9 +51,8 @@ public class Role {
     }
 
     // set role to occupied once player has taken role
-    public void setOccupied(boolean Occupied) {
-      setAssignnedPlayer(assignedPlayer);
-
+    public void  removePlayerFromRole(){
+        this.assignedPlayer=null;
     }
 
 }
