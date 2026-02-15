@@ -1,17 +1,20 @@
 import java.util.*;
+import java.util.List;
 
 public class Scene {
     private String sceneName;
     private String sceneDescription;
     private int movieBudget;
-    private List<Role> starRoles;
-    List<Role> availibleStarRoles;
+    private List<Role> starRoles = new ArrayList<>();
+    List<Role> availibleStarRoles = new ArrayList<>(starRoles);
 
-    public Scene(String sceneName, String sceneDesciption, int movieBudget, ArrayList<Role> availibleStarRoles) {
+    public Scene(String sceneName, String sceneDesciption, int movieBudget, ArrayList<Role> StarRoles) {
         this.sceneName = sceneName;
         this.sceneDescription = sceneDesciption;
         this.movieBudget = movieBudget;
-        this.availibleStarRoles = availibleStarRoles;
+        if (starRoles != null) {
+            List<Role> availibleStarRoles = new ArrayList<>(starRoles);
+        }
 
     }
 
@@ -34,21 +37,24 @@ public class Scene {
 
     // adding player to scenecard
     public void addStarRole(Role star) {
-        starRoles.add(star);
-
+        if (star != null) {
+            starRoles.add(star);
+        }
     }
+
+    
 
     public void resetScene() {
         // removes player from role ;
         for (Role star : starRoles) {
-            if (star.isOccupied()) {
+            if (star.isOccupied()&& star.isOccupied()) {
                 star.removePlayerFromRole();
             }
         }
     }
 
     public List<Role> getAvailibleStarRoles() {
-
+        availibleStarRoles.clear();
         // for-loop for star roles in role and checks if role is occupied
         for (Role star : getStarRoles()) {
             if (!star.isOccupied())

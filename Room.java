@@ -11,19 +11,18 @@ public class Room {
     private List<Room> adjacentRooms = new ArrayList<>();
      List<Role> availibleRoles = new ArrayList<>();
     private boolean isSet;
-    private boolean isAvailible;
-
+// Room constructor for trailer and casting office
     public Room(String roomName, boolean isSet) {
         this.roomName = roomName;
         this.isSet = isSet;
     }
-
+//Room constructor for sets 
     public Room(String roomName, int totalShots, boolean isSet) {
         this.roomName = roomName;
         this.totalShots = totalShots;
         this.remainingShots = totalShots;
         this.isSet = isSet;
-        this.extraroles=extraroles;
+   
 
     }
 
@@ -62,8 +61,18 @@ public class Room {
     }
 
     public void setCurrentScene(Scene scene) {
-        this.currentScene = scene;
-        this.remainingShots = totalShots;
+        //assign scen and reset shots
+        if(isSet){
+               this.currentScene = scene;
+               if(scene==null){
+                this.remainingShots = 0;
+               }else{
+               this.remainingShots = totalShots;
+               }
+        }else{
+            return;
+        }
+
     }
 
     public boolean hasActiveScene() {
@@ -92,7 +101,7 @@ public class Room {
     }
 
     public List<Role> getAvailibleExtraRoles() {
-
+        availibleExtraroles.clear();    
         // for-loop for extra roles in role and returns unoccupied roles
         for (Role extra : getExtraRole()) {
             if (!extra.isOccupied())
@@ -105,7 +114,7 @@ public class Room {
         List<Role> allRoles = new ArrayList<>();
         // combines star and extra roles
         allRoles.addAll(extraroles);
-        if (currentScene != null) {
+        if (currentScene != null && currentScene.getStarRoles() != null) {
             allRoles.addAll(currentScene.getStarRoles());
         }
 
@@ -114,6 +123,7 @@ public class Room {
     }
 
     public List<Role> getAvailibleRoles() {
+        availibleRoles.clear();
         for (Role roles : getAllRoles()) {
             if (!roles.isOccupied()) {
                 availibleRoles.add(roles);
