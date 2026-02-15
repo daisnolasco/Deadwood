@@ -13,7 +13,7 @@ public class Player {
     this.rank = rank;
     this.credits = credits;
     this.dollars = dollars;
-    this.rehearsalTokens = 0;
+    this.rehearsalTokens=rehearsalTokens;
     this.currentRoom = currentRoom;
     this.currentRole = null;
 
