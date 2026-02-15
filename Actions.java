@@ -1,11 +1,13 @@
 //Action class will get playerInput from Deadwood class and it will be validated and excuted in Actions class 
 public class Actions {
     private Board board;
-    private CastingOffice CastingOffice;
+    private CastingOffice castingOffice;
     private Dice dice;
 
    
     public Actions() {
+        this.dice = new Dice(0);
+        this.castingOffice = new CastingOffice();
         //Action constructor not yet implemented 
 
 
@@ -34,8 +36,8 @@ public class Actions {
         return player.isWorking();
     }
 
-    public boolean validateCanUpdrade(Player player, int newRank) {
-        return true;
+    public boolean validateCanUpgrade(Player player, int newRank) {
+        return castingOffice.validateCanUpgrade(player, newRank);
     }
 
     public void movePlayer(Player player, Room room) {
@@ -54,18 +56,66 @@ public class Actions {
        return dice.bonusDiceSorted(budget);
     }
 
-    public void Act() {
-        //roll dice, get budget  and check if dice>=budget
+    public void Act(Player player) {
+        if(!validateAct(player)) {
+            System.out.println("You are not working on a role!");
+            return;
+        }
 
+        Room currentRoom = player.getCurrentRoom();
+        if (currentRoom == null) {
+            System.out.println("Error: Player not in a room,");
+            return;
+        }
+
+        Scene scene = currentRoom.getCurrentScene();
+        if (scene == null) {
+            System.out.println("Error: No active scene in the room.");
+            return;
+        }
+
+        int budget = scene.getMovieBudget();
+        int roll = rolldice();
+        int total = dice.addRehearsalBonus(roll, player.getRehearsalTokens());
+
+         System.out.println("Rolled " + roll + " + " + player.getRehearsalTokens() +
+                           " rehearsal = " + total + " (budget " + budget + ")");
+        
+        Role role = player.getCurrentRole();
+        if (total >= budget) {
+            if (role.isStarring()) {
+                player.addCredits(2);
+                System.out.println("Act succeeded! Earned 2 credits.");
+            } else {
+                player.addCredits(1);
+                player.addDollars(1);
+                System.out.println("Act succeeded! Earned 1 credit.");
+            }
+            currentRoom.removeShotCounter();
+            if (currentRoom.isSceneComplete()) {
+                wrapScene(currentRoom);
+         }
+        } else {
+            if (!role.isStarring()) {
+                player.addDollars(1);
+                System.out.println("Act failed. Earned 1 dollar.");
+            } else {
+                System.out.println("Act failed. No reward.");
+            }
+        }
     }
+
+    
 
     public void Rehearse() {
         //adds rehearsal  token and gets next player turn
 
     }
 
-    public void upgradeRank() {
+    public void upgradeRank(Player player, int newRank, CastingOffice.PaymentType paymentType) {
         //update player rank
+        castingOffice.upgradePlayer(player, newRank, paymentType);
+         
 
     }
 
