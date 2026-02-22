@@ -94,7 +94,7 @@ public class CastingOffice {
         }
         return upgradeRankCredits[rank - 2];
     }
-
+   
     // Add this method for Actions class integration
     public boolean validateCanUpgrade(Player player, int newRank) {
         // Check both payment types

@@ -11,11 +11,12 @@ public class Role {
         this.roleName = roleName;
         this.line = line;
         this.requiredRank = requiredRank;
-        this.isStarringRole=isStarringRole;
+
+        this.isStar=isStar;
         this.assignedPlayer=null;
+        
 
     }
-
     // Name role name on scenecard
     public String getRoleName() {
         return roleName;
@@ -46,8 +47,10 @@ public class Role {
     }
 
     // sets player to role
-    public void setAssignnedPlayer(Player player) {
+
+    public void setAssignedPlayer(Player player) {
         this.assignedPlayer = player;
+
 
     }
 
@@ -57,9 +60,13 @@ public class Role {
     }
 
     // set role to occupied once player has taken role
-    public void  removePlayerFromRole(){
-        this.assignedPlayer=null;
+
+    public void removePlayerFromRole() {
+        this.assignedPlayer = null;
     }
+
+   
+
     public void roleOptions(){
         if(assignedPlayer.getCurrentRole().isStar){
             System.out.println("Starring Roles:");

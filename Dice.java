@@ -61,13 +61,7 @@ public class Dice {
             diceRolls[i] = roll();
         }
         lastRolls = diceRolls;
-
-        totalVal = 0;
-        for (int roll : diceRolls) {
-            totalVal += roll;
-        }
-
-            return diceRolls;
+        return diceRolls;
     }
 
     //Sorting array in desc order
@@ -89,26 +83,12 @@ public class Dice {
 
     //bonus dice that returns sorted results
     public int[] bonusDiceSorted(int budget) {
-        int[] rolls = bonusDice(budget);
-        return sortDesc(rolls);
-    }
-
-    //Display dice rolls
-    public void displayRolls(int[] rolls) {
-        System.out.print("Dice Rolls: ");
-        for (int i = 0; i < rolls. length; i++) {
-            System.out.print(rolls[i]);
-            if (i < rolls.length - 1) {
-                System.out.print(", ");
-            }
-        }
-        System.out.println();
+        return sortDesc(bonusDice(budget));
     }
 
     //Display sorted rolls
     public void displaySortedRolls(int[] rolls) {
         int[] sorted = sortDesc(rolls);
-        System.out.print("Sorted Rolls(Descending): ");
         for (int i = 0; i < sorted.length; i++) {
             System.out.print(sorted[i]);
             if (i < sorted.length - 1) {
@@ -118,27 +98,5 @@ public class Dice {
         System.out.println();
     }
 
-    public static void main(String[] args) {
-        Dice dice = new Dice(0);
-
-        //Roll single die
-        int singleRoll = dice.roll();
-        System.out.println("Single Die Roll: " + singleRoll);
-
-        //Add rehearsal bonus
-        int rehearsalBonus = dice.addRehearsalBonus(singleRoll, 2);
-        System.out.println("Roll with Rehearsal Bonus (2 tokens): " + rehearsalBonus);
-
-        //Roll multiple bonus dice
-        int budget = 5;
-        int[] bonusRolls = dice.bonusDice(budget);
-        dice.displayRolls(bonusRolls);
-
-        //Display sorted rolls
-        dice.displaySortedRolls(bonusRolls);
-        
-
-        
-
-    }
+    
 }
