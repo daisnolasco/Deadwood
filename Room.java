@@ -53,7 +53,7 @@ public class Room {
 
     }
 
-    public boolean isSceneComeplete() {
+    public boolean isSceneComplete() {
         return remainingShots == 0;
     }
 
