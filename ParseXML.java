@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ParseXML {
-
     // building a document from the XML file
 
     public Document getDocFromFile(String filename)
@@ -23,7 +22,7 @@ public class ParseXML {
             try {
                 doc = db.parse(filename);
             } catch (Exception ex) {
-                System.out.println("XML parse failure");
+                System.out.println("XML parse failure" + filename);
                 ex.printStackTrace();
             }
             return doc;
@@ -34,7 +33,7 @@ public class ParseXML {
         Element root = d.getDocumentElement();
 
         HashMap<String, Room> rooms = new HashMap<>();
-        HashMap<String, ArrayList<String>> adjacentRooms = new HashMap<>();
+        HashMap<String, ArrayList<String>> adjacentMapping = new HashMap<>();
         NodeList sets = root.getElementsByTagName("set");
 
         for (int i = 0; i < sets.getLength(); i++) {
@@ -46,38 +45,36 @@ public class ParseXML {
                 Room room = new Room(roomName, shotCounters, true);
                 rooms.put(roomName, room);
 
-                ArrayList<String> adjacentRoomNames = new ArrayList<>();
-                adjacentRooms.put(roomName, adjacentRoomNames);
+                ;
+                adjacentMapping.put(roomName, new ArrayList<>());
 
                 // getting adjacent rooms
 
                 NodeList children = roomNode.getChildNodes();
                 for (int j = 0; j < children.getLength(); j++) {
-                    Node neigbhor = children.item(j);
-                    if ("neighbors".equals(neigbhor.getNodeName())) {
-                        NodeList neighborNodes = neigbhor.getChildNodes();
+                    Node child = children.item(j);
+                    if ("neighbors".equals(child.getNodeName())) {
+                        NodeList neighborNodes = child.getChildNodes();
                         for (int k = 0; k < neighborNodes.getLength(); k++) {
                             Node neighborNode = neighborNodes.item(k);
                             if ("neighbor".equals(neighborNode.getNodeName())) {
                                 String adjacentRoomName = neighborNode.getAttributes().getNamedItem("name")
                                         .getNodeValue();
-                                adjacentRooms.get(roomName).add(adjacentRoomName);
+                                adjacentMapping.get(roomName).add(adjacentRoomName);
                             }
 
                         }
 
-                    } else if ("parts".equals(neigbhor.getNodeName())) {
-                        NodeList partNodes = neigbhor.getChildNodes();
+                    } else if ("parts".equals(child.getNodeName())) {
+                        NodeList partNodes = child.getChildNodes();
                         for (int k = 0; k < partNodes.getLength(); k++) {
-                            Node partChildNode = partNodes.item(k);
-                            if ("part".equals(partChildNode.getNodeName())) {
-
-                                String roleName = partChildNode.getAttributes().getNamedItem("name").getNodeValue();
+                            Node partNode = partNodes.item(k);
+                            if ("part".equals(partNode.getNodeName())) {
+                                String roleName = partNode.getAttributes().getNamedItem("name").getNodeValue();
                                 int requiredRank = Integer
-                                        .parseInt(partChildNode.getAttributes().getNamedItem("level").getNodeValue());
-                                String line = readLine(partChildNode);
-                                Role extra = new Role(roleName, line, requiredRank, false);
-                                room.addExtraRole(extra);
+                                        .parseInt(partNode.getAttributes().getNamedItem("level").getNodeValue());
+                                String line = readLine(partNode);
+                                room.addExtraRole(new Role(roleName, line, requiredRank, false));
 
                             }
 
@@ -89,36 +86,36 @@ public class ParseXML {
 
             }
 
+        } // parsing trailer
+        Node trailerNode = root.getElementsByTagName("trailer").item(0);
+        if (trailerNode != null && trailerNode.getNodeType() == Node.ELEMENT_NODE) {
+            Room trailer = new Room("trailer", false);
+            rooms.put("trailer", trailer);
+            adjacentMapping.put("trailer", readAdjacentRooms((Element) trailerNode));
+
         }
-         Node trailerNode = root.getElementsByTagName("trailer").item(0);
-                if (trailerNode != null && trailerNode.getNodeType() == Node.ELEMENT_NODE) {
-                    Room trailer = new Room("trailer", false);
+        // parsing casting office
+        Node castingNode = root.getElementsByTagName("office").item(0);
+        if (castingNode != null && castingNode.getNodeType() == Node.ELEMENT_NODE) {
+            Room castingRoom = new Room("office", false);
+            rooms.put("office", castingRoom);
 
-                    rooms.put("trailer", trailer);
-                    adjacentRooms.put("trailer", readAdjacentRooms((Element) trailerNode));
+            adjacentMapping.put("office", readAdjacentRooms((Element) castingNode));
 
-                }
-                Node castingNode = root.getElementsByTagName("office").item(0);
-                if (castingNode != null && castingNode.getNodeType() == Node.ELEMENT_NODE) {
-                    Room castingRoom = new Room("office", false);
-                    rooms.put("office", castingRoom);
-
-                    adjacentRooms.put("office", readAdjacentRooms((Element) castingNode));
-
-                }
-                for (String RoomName : adjacentRooms.keySet()) {
-                    Room currentRoom = rooms.get(RoomName);
-                    ArrayList<String> adjacentNames = adjacentRooms.get(RoomName);
-                    if(currentRoom!=null && adjacentNames!=null){
-                    for (String adjacentRoomName : adjacentNames) {
-                        Room neighborRoom = rooms.get(adjacentRoomName);
-                        if (neighborRoom != null) {
-                            currentRoom.addAdjacentRooms(neighborRoom);
-                        }
+        }
+        for (String RoomName : adjacentMapping.keySet()) {
+            Room currentRoom = rooms.get(RoomName);
+            ArrayList<String> adjacentNames = adjacentMapping.get(RoomName);
+            if (currentRoom != null && adjacentNames != null) {
+                for (String adjacentRoomName : adjacentNames) {
+                    Room neighborRoom = rooms.get(adjacentRoomName);
+                    if (neighborRoom != null) {
+                        currentRoom.addAdjacentRooms(neighborRoom);
                     }
-                }}
-                return rooms;
-
+                }
+            }
+        }
+        return rooms;
 
     }
 
@@ -139,16 +136,17 @@ public class ParseXML {
     private String readLine(Node roleNode) {
 
         Element roleElement = (Element) roleNode;
-        if (roleElement.getElementsByTagName("line").getLength() > 0) {
-            return roleElement.getElementsByTagName("line").item(0).getTextContent();
+        NodeList lineNodes = roleElement.getElementsByTagName("line");
+        if (lineNodes.getLength() > 0) {
+            return lineNodes.item(0).getTextContent();
         }
 
         return "";
     }
 
-    public ArrayList<Scene> readCardData(Document d) {
+    public ArrayList<Scene> readCardData(Document x) {
         ArrayList<Scene> deck = new ArrayList<>();
-        Element root = d.getDocumentElement();
+        Element root = x.getDocumentElement();
         NodeList cards = root.getElementsByTagName("card");
         for (int i = 0; i < cards.getLength(); i++) {
             Node cardNode = cards.item(i);
@@ -156,28 +154,37 @@ public class ParseXML {
                 Element cardElement = (Element) cardNode;
                 String sceneName = cardElement.getAttribute("name");
 
-                String sceneDescription = cardElement.getElementsByTagName("scene").item(0).getTextContent();
+                String sceneDescription = "";
+                int sceneNumber = 0;
                 int movieBudget = Integer.parseInt(cardElement.getAttribute("budget"));
-                ArrayList<Role> starRoles = new ArrayList<>();
-                NodeList partNode = cardElement.getElementsByTagName("part");
-                for (int j = 0; j < partNode.getLength(); j++) {
-                    Node partNodes = partNode.item(j);
+                NodeList sceneNode = cardElement.getElementsByTagName("scene");
+                if (sceneNode.getLength() > 0) {
+                    Element sceneElement = (Element) sceneNode.item(0);
+                    sceneDescription = sceneElement.getTextContent();
+                    sceneNumber = Integer.parseInt(sceneElement.getAttribute("number"));
+                    ArrayList<Role> starRoles = new ArrayList<>();
+                    NodeList partNodes = cardElement.getElementsByTagName("part");
+                    for (int j = 0; j < partNodes.getLength(); j++) {
+                        Node partNode = partNodes.item(j);
 
-                    if (partNodes.getNodeType() == Node.ELEMENT_NODE) {
-                        Element partElement = (Element) partNodes;
-                        String roleName = partElement.getAttribute("name");
-                        int requiredRank = Integer.parseInt(partElement.getAttribute("level"));
-                        String line = readLine(partNodes);
-                        Role starRole = new Role(roleName, line, requiredRank, true);
-                        starRoles.add(starRole);
+                        if (partNode.getNodeType() == Node.ELEMENT_NODE) {
+
+                            String roleName = partNode.getAttributes().getNamedItem("name").getNodeValue();
+                            int requiredRank = Integer
+                                    .parseInt(partNode.getAttributes().getNamedItem("level").getNodeValue());
+                            String line = readLine(partNode);
+                            Role starRole = new Role(roleName, line, requiredRank, true);
+                            starRoles.add(starRole);
+                        }
                     }
+                    Scene sceneCard = new Scene(sceneName, sceneDescription, movieBudget, sceneNumber, starRoles);
+                    deck.add(sceneCard);
                 }
-                Scene sceneCard = new Scene(sceneName, sceneDescription, movieBudget, starRoles);
-                deck.add(sceneCard);
+
             }
+           
 
         }
-        return deck;
-
+         return deck;
     }
 }

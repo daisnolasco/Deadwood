@@ -9,20 +9,21 @@ public class Room {
     private List<Role> availibleExtraroles = new ArrayList<>();
     private List<Player> playersInRoom = new ArrayList<>();
     private List<Room> adjacentRooms = new ArrayList<>();
-     List<Role> availibleRoles = new ArrayList<>();
+    List<Role> availibleRoles = new ArrayList<>();
     private boolean isSet;
-// Room constructor for trailer and casting office
+
+    // Room constructor for trailer and casting office
     public Room(String roomName, boolean isSet) {
         this.roomName = roomName;
         this.isSet = isSet;
     }
-//Room constructor for sets 
+
+    // Room constructor for sets
     public Room(String roomName, int totalShots, boolean isSet) {
         this.roomName = roomName;
         this.totalShots = totalShots;
         this.remainingShots = totalShots;
         this.isSet = isSet;
-   
 
     }
 
@@ -61,15 +62,15 @@ public class Room {
     }
 
     public void setCurrentScene(Scene scene) {
-        //assign scen and reset shots
-        if(isSet){
-               this.currentScene = scene;
-               if(scene==null){
+        // assign scen and reset shots
+        if (isSet) {
+            this.currentScene = scene;
+            if (scene == null) {
                 this.remainingShots = 0;
-               }else{
-               this.remainingShots = totalShots;
-               }
-        }else{
+            } else {
+                this.remainingShots = totalShots;
+            }
+        } else {
             return;
         }
 
@@ -80,12 +81,15 @@ public class Room {
     }
 
     public void removeScene() {
-        if(currentScene!=null){
+        if (currentScene != null) {
             currentScene.resetScene();
         }
         this.remainingShots = 0;
         this.currentScene = null;
-  
+        for (Player player : playersInRoom) {
+            player.setCurrentRole(null);
+
+        }
 
     }
 
@@ -101,8 +105,9 @@ public class Room {
     }
 
     public List<Role> getAvailibleExtraRoles() {
-        availibleExtraroles.clear();    
+        availibleExtraroles.clear();
         // for-loop for extra roles in role and returns unoccupied roles
+
         for (Role extra : getExtraRole()) {
             if (!extra.isOccupied())
                 availibleExtraroles.add(extra);
@@ -111,9 +116,8 @@ public class Room {
     }
 
     public List<Role> getAllRoles() {
-        List<Role> allRoles = new ArrayList<>();
+        List<Role> allRoles = new ArrayList<>(extraroles);
         // combines star and extra roles
-        allRoles.addAll(extraroles);
         if (currentScene != null && currentScene.getStarRoles() != null) {
             allRoles.addAll(currentScene.getStarRoles());
         }
@@ -158,12 +162,55 @@ public class Room {
     public boolean isAdjacent(Room otherRoom) {
         return adjacentRooms.contains(otherRoom);
     }
-   
-
-  
 
     public void addAdjacentRooms(Room room) {
         adjacentRooms.add(room);
+
+    }
+
+    /*
+     * public boolean hasBoth(int rank) {
+     * if (getAvailibleExtraRoles().isEmpty() &&
+     * !currentScene.getAvailibleStarRoles().isEmpty()) {
+     * System.out.println("Only Starring Roles Availible");
+     * for (Role role : currentScene.getAvailibleStarRoles()) {
+     * 
+     * if (!role.isOccupied() && role.getRequiredRank() <= rank) {
+     * role.displayRole();
+     * }
+     * return false;
+     * }
+     * 
+     * } else if (!getAvailibleExtraRoles().isEmpty() &&
+     * currentScene.getAvailibleStarRoles().isEmpty()) {
+     * System.out.println("Only Extra Roles Availible");
+     * for (Role role : getAvailibleExtraRoles()) {
+     * System.out.println("Only Star Roles Availible");
+     * if (!role.isOccupied() && role.getRequiredRank() <= rank) {
+     * role.displayRole();
+     * }
+     * return false;
+     * }
+     * 
+     * }
+     * return true;
+     * 
+     * }
+     */
+    public void displayRoleOption(int rank) {
+        List<Role> options = getAvailibleRoles();
+        int num = 1;
+        for (Role role : options) {
+            if (role.getRequiredRank() <= rank) {
+                System.out.print(num + ". ");
+                role.displayRole();
+                num++;
+            }
+        }if(options.isEmpty()){
+          
+                System.out.println("No availible roles for rank :" + rank);
+    
+        }
 
     }
 
@@ -172,25 +219,38 @@ public class Room {
         System.out.println("Remaining Shots: " + remainingShots);
         if (currentScene != null) {
             currentScene.displaySceneInfo();
-            System.out.println("Extra Roles:");
-            for (Role extra : getAvailibleExtraRoles()) {
-                extra.displayRole();
+            System.out.println("----------------------------------");
+            if (!getAvailibleExtraRoles().isEmpty()) {
+                System.out.println("Extra Roles: ");
+                for (Role extra : getAvailibleExtraRoles()) {
+                    extra.displayRole();
+                }
+            }
+              System.out.println("----------------------------------");
+            if(!currentScene.getAvailibleStarRoles().isEmpty()){
+                            System.out.println("Starring Roles: ");
+
+                 for (Role star: currentScene.getAvailibleStarRoles()) {
+                    star.displayRole();
+                }
 
             }
-        } else {
-            System.out.println("Scene is complete");
+
+        }else{
+            System.out.println("No active Scene or Roles ");
         }
-        
+          System.out.println("----------------------------------");
 
     }
 
+
+
+
     public void displayNieghbors() {
-        System.out.println(getRoomName());
-        for(Room neighbors: getAdjacentRooms()){
-            System.out.println(neighbors.getRoomName() + neighbors.hasActiveScene());
+
+        for (int i = 0; i < adjacentRooms.size(); i++) {
+            System.out.println(i + 1 + "." + adjacentRooms.get(i).getRoomName());
         }
-  
-        
 
     }
 

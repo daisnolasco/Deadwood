@@ -7,13 +7,14 @@ public class Player {
   private int rehearsalTokens;
   private Room currentRoom;
   private Role currentRole;
+  
 
   public Player(String playerName, int rank, int credits, int dollars, Room currentRoom) {
     this.playerName = playerName;
     this.rank = rank;
     this.credits = credits;
     this.dollars = dollars;
-    this.rehearsalTokens=rehearsalTokens;
+    this.rehearsalTokens=0;
     this.currentRoom = currentRoom;
     this.currentRole = null;
 
@@ -76,7 +77,10 @@ public class Player {
 
   public void setCurrentRole(Role currentRole) {
     this.currentRole = currentRole;
-    resetTokens();
+    if(currentRole==null){
+  resetTokens();
+    }
+  
   }
 
   // checks if player is currently working on role
@@ -102,6 +106,9 @@ public class Player {
   public void addDollars(int amount) {
     this.dollars += amount;
   }
+  public void deductDollars(int amount) {
+    this.dollars -= amount;
+  }
 
   public void addCredits(int amount) {
     this.credits += amount;
@@ -115,21 +122,29 @@ public class Player {
 
   // Displaying player info
   public void displayPlayerInfo() {
-    System.out.println(playerName + ":");
-    System.out.println("Rank : " + rank);
-    System.out.println("Credits : " + credits);
-    System.out.println("Dollars : " + dollars);
-    System.out.println("Rehearsal Tokens : " + rehearsalTokens);
+    System.out.println();
+    System.out.println(playerName + "'s " + "Turn!");
+    System.out.print("Rank = " + rank +"| ");
+    System.out.print("Credits = " + credits +"| ");
+    System.out.print("Dollars = " + dollars+"| ");
+    System.out.print("Rehearsal Tokens = " + rehearsalTokens+"| ");
     if (currentRoom != null) {
-      System.out.println("set: " + currentRoom.getRoomName());
+      System.out.print("set= " + currentRoom.getRoomName()+"| ");
     } else {
-      System.out.println("set: none");
+      System.out.print("set= none| "+"| ");
     }
     if (currentRole != null) {
-      System.out.println("Role : " + currentRole.getRoleName());
+      if(currentRole.isStarringRole()){
+        System.out.print(" Starring Role : " + currentRole.getRoleName());
+
+      }else{
+         System.out.print(" Extra Role : " + currentRole.getRoleName());
+      }
+      
     } else {
-      System.out.println("Role : none");
+      System.out.print("Role = none"+"| ");
     }
+    System.out.println();
 
   }
 
