@@ -135,7 +135,7 @@ public class Actions {
         }
         if (player.getRehearsalTokens() + 1 >= scene.getMovieBudget()) {
             System.out.println("Guaranteed Success You must Act");
-          
+
             return false;
 
         }
@@ -155,6 +155,11 @@ public class Actions {
     }
 
     public void act(Player player) {
+
+        if (board.isDayOver()) {
+            System.out.println("The day is over. You cannot act now.");
+            return;
+        }
 
         if (!validateAct(player)) {
             System.out.println("You are not Currently working on a role!");
@@ -185,8 +190,8 @@ public class Actions {
                 player.addCredits(1);
                 player.addDollars(1);
                 System.out.println("Act succeeded! Earned 1 credit and 1 dollar.");
-                System.out.println("Remaining Shots:" + currentRoom.getRemainingCounters());
             }
+            System.out.println("Remaining Shots: " + currentRoom.getRemainingCounters());
             currentRoom.removeShotCounter();
             if (currentRoom.isSceneComplete()) {
                 wrapScene(currentRoom);
@@ -204,6 +209,10 @@ public class Actions {
     }
 
     public void Rehearse(Player player) {
+        if (board.isDayOver()) {
+            System.out.println("The day is over. You cannot rehearse now.");
+            return;
+        }
         if (!validateRehearse(player)) {
             return;
         }
@@ -216,10 +225,9 @@ public class Actions {
         board.moveToOffice(player);
         System.out.println("Current rank: " + player.getRank());
         castingOffice.displayCosts();
-          System.out.println("Enter Rank and Payment type (d| dollars) or (c| credits) ");
+        System.out.println("Enter Rank and Payment type (d| dollars) or (c| credits) ");
 
     }
-    
 
     public void upgradeRank(Player player, String newRank, String paymentType) {
         // update player rank
@@ -251,25 +259,12 @@ public class Actions {
     }
 
     public void wrapScene(Room room) {
-        // remove scenes in room,clear roles,
-        System.out.println("Scene in " + room.getRoomName() + " is a wrapped");
+        System.out.println("Scene in " + room.getRoomName() + " is a wrap");
         Scene scene = room.getCurrentScene();
         if (scene == null)
             return;
         payOut(room, scene);
-//clear roles before removing scene 
-        List<Role> allRoles = room.getAllRoles();
-        for (Role role : allRoles) {
-            Player player = role.getAssignedPlayer();
-            if (player != null) {
-                player.leaveRole();
-                role.removePlayerFromRole();
-            }
-            role.removePlayerFromRole();
-        }
-        room.removeScene();
-        board.removeScene(room);
-
+        board.removeScene(room); // this clears the room and decrements activeScenes
     }
 
     public void payOut(Room room, Scene scene) {

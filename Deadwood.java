@@ -62,6 +62,18 @@ public class Deadwood {
         board.moveToTrailer(players);
 
     }
+
+    // helper method to display all players and their locations on the board, used
+    // for testing and debugging
+    private void displayAllPlayersLocations() {
+        System.out.println("\n--- Player Locations ---");
+        for (Player p : players) {
+            String activeMark = (p == currentPlayer) ? " (active)" : "";
+            String roomName = (p.getCurrentRoom() != null) ? p.getCurrentRoom().getRoomName() : "Unknown";
+            System.out.println("- " + p.getPlayerName() + activeMark + " : " + roomName);
+        }
+        System.out.println("------------------------");
+    }
     // main Game loop, loops through each player in list
 
     public void runDeadwood() {
@@ -86,6 +98,10 @@ public class Deadwood {
             }
             if (playerInput.equals("where")) {
                 currentRoom.displaySetInfo();
+                continue;
+            }
+            if (playerInput.equals("players") || playerInput.equals("status")) {
+                displayAllPlayersLocations();
                 continue;
             }
             if (playerInput.equals("quit")) {
@@ -210,7 +226,8 @@ public class Deadwood {
                 || (currentRoom.isSet()) && currentRoom.hasActiveScene() && !currentRoom.getAvailibleRoles().isEmpty()
                         && playerInput.equals("3")
                 ||
-                (currentRoom.isSet()) && !currentRoom.hasActiveScene() &&currentRoom.getAvailibleRoles().isEmpty() && playerInput.equals("2")) {
+                (currentRoom.isSet()) && !currentRoom.hasActiveScene() && currentRoom.getAvailibleRoles().isEmpty()
+                        && playerInput.equals("2")) {
             action.displayUpgradeOptions(currentPlayer);
             currentRoom = currentPlayer.getCurrentRoom();
             playerInput = input.nextLine().trim();
