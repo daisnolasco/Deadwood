@@ -79,13 +79,14 @@ public class Room {
     public boolean hasActiveScene() {
         return currentScene != null;
     }
-
+//scene is complete and removed
     public void removeScene() {
         if (currentScene != null) {
             currentScene.resetScene();
         }
         this.remainingShots = 0;
         this.currentScene = null;
+        //working players role  set to null when scene is complete
         for (Player player : playersInRoom) {
             player.setCurrentRole(null);
 
@@ -117,7 +118,7 @@ public class Room {
 
     public List<Role> getAllRoles() {
         List<Role> allRoles = new ArrayList<>(extraroles);
-        // combines star and extra roles
+        // combines star all and extra roles 
         if (currentScene != null && currentScene.getStarRoles() != null) {
             allRoles.addAll(currentScene.getStarRoles());
         }
@@ -127,6 +128,7 @@ public class Room {
     }
 
     public List<Role> getAvailibleRoles() {
+        //combinres only availible star and extra roles
         availibleRoles.clear();
         for (Role roles : getAllRoles()) {
             if (!roles.isOccupied()) {
@@ -197,6 +199,8 @@ public class Room {
      * 
      * }
      */
+    
+    //only displaying roles that player can get based on rank
     public void displayRoleOption(int rank) {
         List<Role> options = getAvailibleRoles();
         int num = 1;
@@ -213,7 +217,7 @@ public class Room {
         }
 
     }
-
+//set info displatyed when player moves to a set 
     public void displaySetInfo() {
         System.out.println("Room Name: " + roomName);
         System.out.println("Remaining Shots: " + remainingShots);
@@ -245,7 +249,7 @@ public class Room {
 
 
 
-
+//numbered adjacent rooms
     public void displayNieghbors() {
 
         for (int i = 0; i < adjacentRooms.size(); i++) {
