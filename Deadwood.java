@@ -102,8 +102,11 @@ public class Deadwood {
                 continue;
             } // location of the current players and all the other players on the board
             if (playerInput.equalsIgnoreCase("players") || playerInput.equalsIgnoreCase("status")
+                
                     || playerInput.equalsIgnoreCase("board")) {
+                        board.displayBoardInfo(players);
                 displayAllPlayersLocations();
+                
                 continue;
             } // player quits game and loop continues if there are players remaing
             if (playerInput.equalsIgnoreCase("quit")) {
@@ -284,7 +287,7 @@ public class Deadwood {
                 "User Can Enter these commands on turn:\n" + //
                 "\"who\": Active player info\n" + //
                 "\n" + //
-                "\"board\": display player info for all players\n" + //
+                "\"board\": display board and player info for all players\n" + //
                 "\n" + //
                 "\"skip\" : to skip a turn\n" + //
                 "\n" + //
