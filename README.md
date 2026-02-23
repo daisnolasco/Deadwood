@@ -15,8 +15,12 @@ To Play:
 3. game loops through each player and only ends when all days are complete , if all plauyers quit or player enters in 
 
 User Can Enter these commands on turn:
-who: Active player info
-board: display player info for all players
-skip : to skip a turn
-quit : to quit playing and remove player
-end : end game at any time an display score
+"who": Active player info
+
+"board": display board and player info for all players
+
+"skip" : to skip a turn
+
+"quit" : to quit playing and remove player
+
+"end" : end game at any time an display score
