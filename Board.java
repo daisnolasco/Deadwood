@@ -128,7 +128,7 @@ public class Board {
         }
         return sets;
     }
-
+//move players to trailer on a new day 
     public void moveToTrailer(List<Player> players) {
         for (Player player : players) {
             if (player.getCurrentRoom() != null) {
@@ -139,7 +139,7 @@ public class Board {
             trailers.addPlayer(player);
             player.leaveRole();
         }
-    }
+    }//move player to casting office 
     public void moveToOffice(Player player){
         Room currentRoom=player.getCurrentRoom();
         if(!currentRoom.getRoomName().equalsIgnoreCase("office")){
@@ -157,16 +157,17 @@ public class Board {
     public void displayPlayers(List<Player> players) {
         System.out.println("Total players: " + players.size());
         System.out.println("Players :");
-        for (Player player : players) {
+        for (Player p : players) {
+            p.displayPlayerInfo();
 
-            player.displayPlayerInfo();
+        
 
         }
 
     }
 
     public void displayBoardInfo(List<Player> players) {
-        System.out.println("Days remaining : " + dayCount + "/" + totalDays);
+        System.out.println("Days : " + dayCount + "/" + totalDays);
         System.out.println("Active Scenes remaing " + activeScenes);
         System.out.println("Total Players :" + players.size());
     }
@@ -192,6 +193,7 @@ public class Board {
                 System.out.println("No winner ");
             }
     }
+    //helpful setters and getting 
 
     public Room getRoom(String roomName) {
         return rooms.get(roomName);
