@@ -1,6 +1,6 @@
 import java.util.*;
 
-//Partially implemented Deadwood Class : Runs main game loop, Keeps track of Days, handles player turn, order and input
+//
 public class Deadwood {
     private ArrayList<Player> players = new ArrayList<Player>();
     Board board;
@@ -28,6 +28,7 @@ public class Deadwood {
     public void setupGame() {
         // getting numnber of players
         while (true) {
+            System.out.println();
             System.out.println("Enter Number of Players (2-8).");
             totalPlayers = input.nextInt();
             if (totalPlayers < 2 || totalPlayers > 8) {
@@ -53,6 +54,7 @@ public class Deadwood {
 
         }
         // Player enters name and added to players list
+
         for (int i = 1; i <= totalPlayers; i++) {
             System.out.println("Enter Name for Player " + i + ":");
             String playerName = input.nextLine();
@@ -87,66 +89,64 @@ public class Deadwood {
         while (!board.isGameOver() && !players.isEmpty()) {
             currentPlayer = getCurrentPlayer();
             currentRoom = currentPlayer.getCurrentRoom();
+
             currentPlayer.displayPlayerInfo();
             System.out.println();
             displayPlayerOptions(currentPlayer);
             playerInput = input.nextLine().trim().toLowerCase();
             // handling non action commands , continue turn after command
-            if (playerInput.equals("who")) {
+
+            // Identify the active player - Display this players’ information
+            if (playerInput.equalsIgnoreCase("who") || playerInput.equalsIgnoreCase("where")) {
                 currentPlayer.displayPlayerInfo();
                 continue;
-            }
-            if (playerInput.equals("where")) {
-                currentRoom.displaySetInfo();
-                continue;
-            }
-            if (playerInput.equals("players") || playerInput.equals("status")) {
+            } // location of the current players and all the other players on the board
+            if (playerInput.equalsIgnoreCase("players") || playerInput.equalsIgnoreCase("status")
+                    || playerInput.equalsIgnoreCase("board")) {
                 displayAllPlayersLocations();
                 continue;
-            }
-            if (playerInput.equals("quit")) {
+            } // player quits game and loop continues if there are players remaing
+            if (playerInput.equalsIgnoreCase("quit")) {
                 board.removePlayer(players, playerIndex);
                 continue;
             }
-
-            if (playerInput.equals("end")) {
+            // end game
+            if (playerInput.equalsIgnoreCase("end")) {
                 endOfGame();
                 // calc score
                 break;
 
             }
-            if (playerInput.equals("board")) {
-                board.displayPlayers(players);
 
-                continue;
-            }
-            if (playerInput.equals("skip")) {
+            // skipping turn based on displayplayerOption method
+            if (playerInput.equalsIgnoreCase("skip")) {
                 nextTurn();
                 continue;
             }
-            // skipping turn based on displayplayerOption method
             if (currentPlayer.isWorking() && playerInput.equals("3")) {
                 nextTurn();
                 continue;
             }
-            if (!currentRoom.isSet() && playerInput.equals("2")) {
+            if (!currentRoom.isSet() && !currentRoom.getRoomName().equalsIgnoreCase("office")
+                    && playerInput.equals("2")) {
                 nextTurn();
                 continue;
-
-            }
+            } // trailer only
             if (currentRoom.isSet() && currentRoom.hasActiveScene() && !currentRoom.getAvailibleRoles().isEmpty()
                     && playerInput.equals("4")) {
                 nextTurn();
                 continue;
-
             }
-            if (currentRoom.isSet() && (!currentRoom.hasActiveScene() || currentRoom.getAvailibleRoles().isEmpty())
-                    && playerInput.equals("3")) {
+            if (currentRoom.isSet() && !currentRoom.hasActiveScene() && playerInput.equals("3")) {
+                nextTurn();
+                continue;
+            }
+            if (playerInput.equalsIgnoreCase("skip")) {
                 nextTurn();
                 continue;
 
             }
-
+            // player availible actions based on if player is working
             if (currentPlayer.isWorking()) {
                 playerWorking();
 
@@ -155,9 +155,9 @@ public class Deadwood {
             }
             if (board.isDayOver()) {
                 endOfDay();
+
             }
         }
-
     }
 
     public void displayPlayerOptions(Player currP) {
@@ -171,7 +171,7 @@ public class Deadwood {
 
             } else {
                 // no active scne and no availible roles left
-                System.out.println("1| Move, 2| Upgrade,  3| Skip");
+                System.out.println("1| Move, upgrade| Upgrade,  3| Skip");
 
             }
 
@@ -208,6 +208,9 @@ public class Deadwood {
                     }
 
                 }
+                if (!newRoom.isSet() && newRoom.getRoomName().equalsIgnoreCase("office")) {
+
+                }
 
             }
             nextTurn();
@@ -223,11 +226,16 @@ public class Deadwood {
             nextTurn();
 
         } else if (playerInput.equalsIgnoreCase("Upgrade")
+
                 || (currentRoom.isSet()) && currentRoom.hasActiveScene() && !currentRoom.getAvailibleRoles().isEmpty()
                         && playerInput.equals("3")
                 ||
                 (currentRoom.isSet()) && !currentRoom.hasActiveScene() && currentRoom.getAvailibleRoles().isEmpty()
-                        && playerInput.equals("2")) {
+                        && playerInput.equals("2")
+                ||
+                (currentRoom.isSet()) && currentRoom.hasActiveScene()
+                        && playerInput.equals("2")
+                || (currentRoom.getRoomName().equalsIgnoreCase("office"))) {
             action.displayUpgradeOptions(currentPlayer);
             currentRoom = currentPlayer.getCurrentRoom();
             playerInput = input.nextLine().trim();
@@ -264,6 +272,25 @@ public class Deadwood {
 
     public void displayRules() {
 
+        System.out.println("To Play:\n" + //
+
+                "1. Players start at trailer and on turn can only move from trailer or skip turn \n" + //
+                "2. A player is given option to move , take role , upgrade or skip turn when they dont have a role\n" + //
+                "3. Player can only  act rehearse or skip turn when they are working a role\n" + //
+                "4. On Turn ,you can either enter a Action Name or Number for \n" + //
+                "5. game loops through each player and only ends when all days are complete , if all plauyers quit or player enters in \n"
+                + //
+                "\n" + //
+                "User Can Enter these commands on turn:\n" + //
+                "\"who\": Active player info\n" + //
+                "\n" + //
+                "\"board\": display player info for all players\n" + //
+                "\n" + //
+                "\"skip\" : to skip a turn\n" + //
+                "\n" + //
+                "\"quit\" : to quit playing and remove player\n" + //
+                "\n" + //
+                "\"end\" : end game at any time an display score");
     }
 
     // helpful getters
