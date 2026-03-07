@@ -14,7 +14,9 @@ public class Actions {
         this.board = board;
 
     }
-//moves players to an adjacent room by number or name and loops until valid input or  turrned is skiped 
+
+    // moves players to an adjacent room by number or name and loops until valid
+    // input or turrned is skiped
     public boolean Move(Player player, String room) {
         Room newRoom = null;
         currentRoom = player.getCurrentRoom();
@@ -53,7 +55,9 @@ public class Actions {
         return true;
 
     }
-//assign role to player by name or number , only dsiplaying roles that the player can get based on their ranks
+
+    // assign role to player by name or number , only dsiplaying roles that the
+    // player can get based on their ranks
     public void takeRole(Player player, String roleName) {
         currentRoom = player.getCurrentRoom();
 
@@ -61,7 +65,7 @@ public class Actions {
             System.out.println("No roles in this set");
             return;
         }
-//new role list that matched the list that was displayed to player 
+        // new role list that matched the list that was displayed to player
         List<Role> availible = new ArrayList<>();
         for (Role rl : currentRoom.getAvailibleRoles()) {
             if (rl.getRequiredRank() <= player.getRank()) {
@@ -105,7 +109,8 @@ public class Actions {
         }
 
     }
-//validation for takign a role 
+
+    // validation for takign a role
     public boolean validateTakeRole(Player player, Role role) {
 
         if (player.getCurrentRole() != null) {
@@ -152,9 +157,12 @@ public class Actions {
     public int[] rollBonusDice(int budget) {
         return dice.bonusDiceSorted(budget);
     }
-//Player attempts to complete a shot Rolls dice + rehearsal tokens and check if ots equal or greater than the  scene budget.
-    // Success = earn credits (starring) or credits + dollars (extra) ,Failure= earn dollar (extra only).
-     // Removes a shot counter if successful — wraps scene if all shots gone.
+
+    // Player attempts to complete a shot Rolls dice + rehearsal tokens and check if
+    // ots equal or greater than the scene budget.
+    // Success = earn credits (starring) or credits + dollars (extra) ,Failure= earn
+    // dollar (extra only).
+    // Removes a shot counter if successful — wraps scene if all shots gone.
     public void act(Player player) {
 
         if (board.isDayOver()) {
@@ -208,7 +216,8 @@ public class Actions {
         }
 
     }
-//reharsal token added on rehearse as long as it not a guarteed win
+
+    // reharsal token added on rehearse as long as it not a guarteed win
     public void Rehearse(Player player) {
         if (board.isDayOver()) {
             System.out.println("The day is over. You cannot rehearse now.");
@@ -223,14 +232,18 @@ public class Actions {
     }
 
     public void displayUpgradeOptions(Player player) {
-        board.moveToOffice(player);
+        if (!player.getCurrentRoom().getRoomName().equalsIgnoreCase("office")) {
+            System.out.println("You must be in the casting office to upgrade.");
+            return; // Do not proceed
+        }
         System.out.println("Current rank: " + player.getRank());
         castingOffice.displayCosts();
         System.out.println("Enter Rank and Payment type (d| dollars) or (c| credits) ");
-
     }
-//
-    // CastingOffice validates funds and applies the upgrade if playe is in  office, rank must be valid number, payment is d/c.
+
+    //
+    // CastingOffice validates funds and applies the upgrade if playe is in office,
+    // rank must be valid number, payment is d/c.
     public void upgradeRank(Player player, String newRank, String paymentType) {
         // update player rank
 
@@ -281,7 +294,6 @@ public class Actions {
                 break;
             }
         }
-      
 
         if (!starringRoles.isEmpty() && onCard) {
             int numRoles = starringRoles.size();

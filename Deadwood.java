@@ -102,11 +102,11 @@ public class Deadwood {
                 continue;
             } // location of the current players and all the other players on the board
             if (playerInput.equalsIgnoreCase("players") || playerInput.equalsIgnoreCase("status")
-                
+
                     || playerInput.equalsIgnoreCase("board")) {
-                        board.displayBoardInfo(players);
+                board.displayBoardInfo(players);
                 displayAllPlayersLocations();
-                
+
                 continue;
             } // player quits game and loop continues if there are players remaing
             if (playerInput.equalsIgnoreCase("quit")) {
@@ -167,31 +167,31 @@ public class Deadwood {
         currentRoom = currP.getCurrentRoom();
         if (!currP.isWorking()) {
             if (!currentRoom.isSet()) {
-                System.out.println("1| Move , 2| Skip");
-
+                // Non‑set rooms: trailer or office
+                if (currentRoom.getRoomName().equalsIgnoreCase("office")) {
+                    System.out.println("1| Move , 2| Upgrade, 3| Skip");
+                } else {
+                    System.out.println("1| Move , 2| Skip");
+                }
             } else if (currentRoom.hasActiveScene() && !currentRoom.getAvailibleRoles().isEmpty()) {
                 System.out.println("1| Move , 2| Take role , 3| Upgrade,  4| Skip");
-
             } else {
-                // no active scne and no availible roles left
-                System.out.println("1| Move, upgrade| Upgrade,  3| Skip");
-
+                // No active scene and no available roles
+                System.out.println("1| Move, 2| Upgrade,  3| Skip");
             }
-
         } else if (currP.isWorking()) {
             System.out.println("1| act , 2 | rehearse, 3| skip");
-
         }
-
     }
 
     public void playerNotworking() {
+        
         if (playerInput.equals("move") || playerInput.equals("1")) {
             System.out.println("You are currently in " + currentRoom.getRoomName());
             System.out.println("Enter Set number or Set name to move to (or skip) :");
             currentRoom.displayNieghbors();
             boolean moved = false;
-            while (!moved) {// loop until valid entry is entered or player skips turn
+            while (!moved) {
                 playerInput = input.nextLine().trim();
                 if (playerInput.equalsIgnoreCase("skip"))
                     break;
@@ -207,55 +207,77 @@ public class Deadwood {
                         newRoom.displayRoleOption(currentPlayer.getRank());
                         playerInput = input.nextLine().trim();
                         action.takeRole(currentPlayer, playerInput);
-
                     }
-
                 }
-                if (!newRoom.isSet() && newRoom.getRoomName().equalsIgnoreCase("office")) {
-
-                }
-
             }
             nextTurn();
+            return;
+        }
 
-        } else if (playerInput.equalsIgnoreCase("Take Role")
-                || playerInput.equals("2") && currentRoom.hasActiveScene()) {
-            Room newRoom = currentPlayer.getCurrentRoom();
-            System.out.println("Enter Role name or number (or skip): ");
-            newRoom.displayRoleOption(currentPlayer.getRank());
-            playerInput = input.nextLine().trim();
-            action.takeRole(currentPlayer, playerInput);
+        
+        boolean isOffice = currentRoom.getRoomName().equalsIgnoreCase("office");
+        boolean isSet = currentRoom.isSet();
+        boolean hasActiveScene = currentRoom.hasActiveScene();
+        boolean hasAvailableRoles = !currentRoom.getAvailibleRoles().isEmpty();
 
-            nextTurn();
-
-        } else if (playerInput.equalsIgnoreCase("Upgrade")
-
-                || (currentRoom.isSet()) && currentRoom.hasActiveScene() && !currentRoom.getAvailibleRoles().isEmpty()
-                        && playerInput.equals("3")
-                ||
-                (currentRoom.isSet()) && !currentRoom.hasActiveScene() && currentRoom.getAvailibleRoles().isEmpty()
-                        && playerInput.equals("2")
-                ||
-                (currentRoom.isSet()) && currentRoom.hasActiveScene()
-                        && playerInput.equals("2")
-                || (currentRoom.getRoomName().equalsIgnoreCase("office"))) {
-            action.displayUpgradeOptions(currentPlayer);
-            currentRoom = currentPlayer.getCurrentRoom();
-            playerInput = input.nextLine().trim();
-            // Parse user input (rank and payment method)
-
-            String[] upgrade = playerInput.split(" ");
-            if (upgrade.length == 2) {
-                action.upgradeRank(currentPlayer, upgrade[0], upgrade[1]);
+        
+        if (isOffice) {
+            if (playerInput.equals("2") || playerInput.equalsIgnoreCase("upgrade")) {
+                action.displayUpgradeOptions(currentPlayer); 
+                String upgradeInput = input.nextLine().trim();
+                String[] parts = upgradeInput.split(" ");
+                if (parts.length == 2) {
+                    action.upgradeRank(currentPlayer, parts[0], parts[1]);
+                } else {
+                    System.out.println("Enter Rank and Payment type (d| dollars) or (c| credits) ");
+                    
+                }
+                nextTurn();
+            } else if (playerInput.equals("3") || playerInput.equalsIgnoreCase("skip")) {
+                nextTurn();
             } else {
-                System.out.println("Enter Rank and Payment type (d| dollars) or (c| credits) ");
+                System.out.println("Invalid input. In office: 1=Move, 2=Upgrade, 3=Skip");
             }
-            nextTurn();
+            return;
+        }
 
-        } else {// invalid input for non working player
-            System.out.println("Please Enter Valid Input");
-            displayPlayerOptions(currentPlayer);
+        
+        if (isSet && hasActiveScene && hasAvailableRoles) {
+            if (playerInput.equals("2") || playerInput.equalsIgnoreCase("take role")) {
+                System.out.println("Enter Role name or number (or skip): ");
+                currentRoom.displayRoleOption(currentPlayer.getRank());
+                playerInput = input.nextLine().trim();
+                action.takeRole(currentPlayer, playerInput);
+                nextTurn();
+            } else if (playerInput.equals("3") || playerInput.equalsIgnoreCase("upgrade")) {
+                System.out.println("You must be in the casting office to upgrade.");
+            } else if (playerInput.equals("4") || playerInput.equalsIgnoreCase("skip")) {
+                nextTurn();
+            } else {
+                System.out.println("Invalid input. Options: 1=Move, 2=Take role, 3=Upgrade, 4=Skip");
+            }
+            return;
+        }
 
+
+        if (isSet && (!hasActiveScene || !hasAvailableRoles)) {
+            if (playerInput.equals("2") || playerInput.equalsIgnoreCase("upgrade")) {
+                System.out.println("You must be in the casting office to upgrade.");
+            } else if (playerInput.equals("3") || playerInput.equalsIgnoreCase("skip")) {
+                nextTurn();
+            } else {
+                System.out.println("Invalid input. Options: 1=Move, 2=Upgrade, 3=Skip");
+            }
+            return;
+        }
+
+        // 6. TRAILER (non‑set, non‑office)
+        if (!isSet && !isOffice) {
+            if (playerInput.equals("2") || playerInput.equalsIgnoreCase("skip")) {
+                nextTurn();
+            } else {
+                System.out.println("Invalid input. Options: 1=Move, 2=Skip");
+            }
         }
     }
 
