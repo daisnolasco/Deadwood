@@ -7,12 +7,13 @@ public class Scene {
     private int sceneNumber;
     private List<Role> starRoles = new ArrayList<>();
     List<Role> availibleStarRoles = new ArrayList<>();
-
+ private String imgPath;
     public Scene(String sceneName, String sceneDesciption, int movieBudget,int sceneNumber, ArrayList<Role> StarRoles) {
         this.sceneName = sceneName;
         this.sceneDescription = sceneDesciption;
         this.movieBudget = movieBudget;
         this.sceneNumber = sceneNumber;
+        this.imgPath = imgPath;
         if (StarRoles != null) {
             this.starRoles.addAll(StarRoles);
         }

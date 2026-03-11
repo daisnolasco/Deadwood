@@ -1,6 +1,8 @@
 import java.util.*;
+//singletone inter
 
 public class Board {
+     private static Board instance = null;
     private static final int totalNumSets = 10;
     private Room trailers;
     private Room castingOffice;
@@ -10,16 +12,26 @@ public class Board {
     private Map<String, Room> rooms;
     private List<Scene> sceneDeck;
 
-    public Board() {
-        // Initialize Board rooms and scenecards
+private Board() {
         rooms = new HashMap<>();
         sceneDeck = new ArrayList<>();
-        // create board ,find the adjacency of each room and deal scene cards
         createBoard();
-
         shuffleDealScene();
-
     }
+
+    // Returns the single Board instance
+    public static Board getInstance() {
+        if (instance == null) {
+            instance = new Board();
+        }
+        return instance;
+    }
+
+    // Resets instance so a new game can start fresh
+    public static void resetInstance() {
+        instance = null;
+    }
+  
 
     private void createBoard() {
         // adds rooms to board and shot counters
@@ -212,5 +224,7 @@ public class Board {
     public int getActiveScenes() {
         return activeScenes;
     }
+
+ 
 
 }

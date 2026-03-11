@@ -7,14 +7,13 @@ public class Player {
   private int rehearsalTokens;
   private Room currentRoom;
   private Role currentRole;
-  
 
   public Player(String playerName, int rank, int credits, int dollars, Room currentRoom) {
     this.playerName = playerName;
     this.rank = rank;
     this.credits = credits;
     this.dollars = dollars;
-    this.rehearsalTokens=0;
+    this.rehearsalTokens = 0;
     this.currentRoom = currentRoom;
     this.currentRole = null;
 
@@ -48,7 +47,15 @@ public class Player {
   public Role getCurrentRole() {
     return currentRole;
   }
+private char color; 
 
+public char getColor() {
+    return color;
+}
+
+public void setColor(char color) {
+    this.color = color;
+}
   // Player stats setters //
 
   public void setPlayerName(String playerName) {
@@ -77,10 +84,10 @@ public class Player {
 
   public void setCurrentRole(Role currentRole) {
     this.currentRole = currentRole;
-    if(currentRole==null){
-  resetTokens();
+    if (currentRole == null) {
+      resetTokens();
     }
-  
+
   }
 
   // checks if player is currently working on role
@@ -106,6 +113,7 @@ public class Player {
   public void addDollars(int amount) {
     this.dollars += amount;
   }
+
   public void deductDollars(int amount) {
     this.dollars -= amount;
   }
@@ -121,31 +129,27 @@ public class Player {
   }
 
   // Displaying player info
-  public void displayPlayerInfo() {
-    System.out.println();
-    System.out.println(playerName + "'s " + "Turn!");
-    System.out.print("Rank = " + rank +"| ");
-    System.out.print("Credits = " + credits +"| ");
-    System.out.print("Dollars = " + dollars+"| ");
-    System.out.print("Rehearsal Tokens = " + rehearsalTokens+"| ");
+  public String getDisplayInfo() {
+    String roomName = "None";
     if (currentRoom != null) {
-      System.out.print("set= " + currentRoom.getRoomName()+"| ");
-    } else {
-      System.out.print("set= none| "+"| ");
+      roomName = currentRoom.getRoomName();
     }
+
+    String roleName = "None";
     if (currentRole != null) {
-      if(currentRole.isStarringRole()){
-        System.out.print(" Starring Role : " + currentRole.getRoleName());
-
-      }else{
-         System.out.print(" Extra Role : " + currentRole.getRoleName());
-      }
-      
-    } else {
-      System.out.print("Role = none"+"| ");
+      roleName = currentRole.getRoleName();
     }
-    System.out.println();
 
-  }
+    return "Name: " + playerName
+        + "\nRank: " + rank
+        + "\nDollars: " + dollars
+        + "\nCredits: " + credits
+        + "\nRehearsal: " + rehearsalTokens
+        + "\nRoom: " + roomName
+        + "\nRole: " + roleName;
+  }public void displayPlayerInfo() {
+        System.out.println();
+        System.out.println(getDisplayInfo());
+    }
 
 }

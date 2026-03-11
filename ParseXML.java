@@ -41,6 +41,15 @@ public class ParseXML {
                 String roomName = roomElement.getAttribute("name");
                 int shotCounters = roomElement.getElementsByTagName("take").getLength();
                 Room room = new Room(roomName, shotCounters, true);
+                NodeList areaNodes = roomElement.getElementsByTagName("area");
+                if (areaNodes.getLength() > 0) {
+                    Element areaEl = (Element) areaNodes.item(0);
+                    int ax = Integer.parseInt(areaEl.getAttribute("x"));
+                    int ay = Integer.parseInt(areaEl.getAttribute("y"));
+                    int aw = Integer.parseInt(areaEl.getAttribute("w"));
+                    int ah = Integer.parseInt(areaEl.getAttribute("h"));
+                    room.setArea(ax, ay, aw, ah);
+                }
                 rooms.put(roomName, room);
 
                 ;
@@ -88,16 +97,34 @@ public class ParseXML {
         Node trailerNode = root.getElementsByTagName("trailer").item(0);
         if (trailerNode != null && trailerNode.getNodeType() == Node.ELEMENT_NODE) {
             Room trailer = new Room("trailer", false);
+          Element trailerEl = (Element) trailerNode;
+            NodeList tareas = trailerEl.getElementsByTagName("area");
+            if (tareas.getLength() > 0) {
+                Element a = (Element) tareas.item(0);
+                trailer.setArea(Integer.parseInt(a.getAttribute("x")),
+                                Integer.parseInt(a.getAttribute("y")),
+                                Integer.parseInt(a.getAttribute("w")),
+                                Integer.parseInt(a.getAttribute("h")));
+            }
             rooms.put("trailer", trailer);
             adjacentMapping.put("trailer", readAdjacentRooms((Element) trailerNode));
-
+        
         }
         // parsing casting office
         Node castingNode = root.getElementsByTagName("office").item(0);
         if (castingNode != null && castingNode.getNodeType() == Node.ELEMENT_NODE) {
             Room castingRoom = new Room("office", false);
+            // Read area for GUI
+            Element officeEl = (Element) castingNode;
+            NodeList oareas = officeEl.getElementsByTagName("area");
+            if (oareas.getLength() > 0) {
+                Element a = (Element) oareas.item(0);
+                castingRoom.setArea(Integer.parseInt(a.getAttribute("x")),
+                                    Integer.parseInt(a.getAttribute("y")),
+                                    Integer.parseInt(a.getAttribute("w")),
+                                    Integer.parseInt(a.getAttribute("h")));
+            }
             rooms.put("office", castingRoom);
-
             adjacentMapping.put("office", readAdjacentRooms((Element) castingNode));
 
         }

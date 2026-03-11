@@ -1,10 +1,12 @@
 import java.util.*;
 
-//
-public class Deadwood {
+import javax.swing.SwingUtilities;
+
+//Controller 
+public class Deadwood  {
     private ArrayList<Player> players = new ArrayList<Player>();
-    Board board;
-    Actions action;
+    private Board board;
+    private Actions action;
     private int playerIndex = 0;
     private int totalDays = 4;
     private int currentDay = 1;
@@ -12,57 +14,81 @@ public class Deadwood {
     private Room currentRoom;
     public boolean gameOver = false;
     private int totalPlayers;
+
     protected Scanner input = new Scanner(System.in);
     String playerInput;
     // default rank, dollars,day
     int rank = 1;
     int credits = 0;
     int dollars = 0;
-
-    public static void main(String[] args) {
-        Deadwood game = new Deadwood();
-        game.runDeadwood();
-
+    private GameView view;
+    private final CastingOffice castingOffice = new CastingOffice();
+public Deadwood() {
+        Board.resetInstance();
+        board = Board.getInstance();
+        action = new Actions(board);
+    }
+   public static void main(String[] args) {
+        Deadwood controller = new Deadwood();
+        BoardLayersListener gui = new BoardLayersListener(controller);
+        gui.setVisible(true);
+        SwingUtilities.invokeLater(() -> gui.runSetupDialogs());
     }
 
-    public void setupGame() {
-        // getting numnber of players
-        while (true) {
-            System.out.println();
-            System.out.println("Enter Number of Players (2-8).");
-            totalPlayers = input.nextInt();
-            if (totalPlayers < 2 || totalPlayers > 8) {
-                System.out.println("Not valid Number ,Enter Number of Players (2-8).");
+    public void setView(GameView view) {
+        this.view = view;
+    }
 
-            } else {
-                break;
-            }
+    // called by view after num players and names are set
+    public void setNumPlayers(int numPlayers) {
+        this.totalPlayers = numPlayers;
 
-        }
-        input.nextLine();
-        // setting up player and game details based on rank
-        if (totalPlayers == 2 || totalPlayers == 3) {
+        if (totalPlayers <= 3) {
+            totalDays = 3;
             board.setTotalDays(3);
+        } else {
+            totalDays = 4;
+            board.setTotalDays(4);
+        }
 
-        } else if (totalPlayers == 5) {
+        if (totalPlayers == 5) {
             credits = 2;
-
         } else if (totalPlayers == 6) {
             credits = 4;
         } else if (totalPlayers == 7 || totalPlayers == 8) {
             rank = 2;
-
         }
-        // Player enters name and added to players list
+    }
 
-        for (int i = 1; i <= totalPlayers; i++) {
-            System.out.println("Enter Name for Player " + i + ":");
-            String playerName = input.nextLine();
-            players.add(new Player(playerName, rank, credits, dollars, board.getTrailers()));
+    public void setupGame(List<String> playerNames) {
+        players.clear();
+char[] colors = {'b', 'c','g','o','p','r','v','w','y'};
+       
+        for (int i = 0; i < totalPlayers; i++) {
+            String name = playerNames.get(i);
+            if (name == null || name.trim().isEmpty()) {
+                name = "Player " + (i + 1);
+            }
 
+            Player p = new Player(name.trim(), rank, credits, dollars, board.getTrailers());
+            p.setColor(colors[i]);
+            p.setCurrentRoom(board.getTrailers());
+
+            players.add(p);
         }
+
         board.moveToTrailer(players);
 
+        playerIndex = 0;
+        currentPlayer = players.get(playerIndex);
+        currentRoom = currentPlayer.getCurrentRoom();
+
+        if (view != null) {
+            view.log("Welcome to Deadwood!");
+            view.log(currentPlayer.getPlayerName() + "'s turn");
+            view.refreshView();
+        }
+    
     }
 
     // helper method to display all players and their locations on the board, used
@@ -77,224 +103,101 @@ public class Deadwood {
         System.out.println("------------------------");
     }
     // main Game loop, loops through each player in list
-
-    public void runDeadwood() {
-        board = new Board();
-        action = new Actions(board);
-
-        System.out.println("Welcome to DeadWood");
-        displayRules();
-        setupGame();
-
-        while (!board.isGameOver() && !players.isEmpty()) {
-            currentPlayer = getCurrentPlayer();
+//Player buttons called by view 
+    public void moveAction(Room targetRoom) {
+        boolean moved = action.Move(currentPlayer, targetRoom.getRoomName());
+        if (moved) {
             currentRoom = currentPlayer.getCurrentRoom();
+            view.log(currentPlayer.getPlayerName()
+                    + " moved to " + currentRoom.getRoomName());
+            view.refreshView();
 
-            currentPlayer.displayPlayerInfo();
-            System.out.println();
-            displayPlayerOptions(currentPlayer);
-            playerInput = input.nextLine().trim().toLowerCase();
-            // handling non action commands , continue turn after command
-
-            // Identify the active player - Display this players’ information
-            if (playerInput.equalsIgnoreCase("who") || playerInput.equalsIgnoreCase("where")) {
-                currentPlayer.displayPlayerInfo();
-                continue;
-            } // location of the current players and all the other players on the board
-            if (playerInput.equalsIgnoreCase("players") || playerInput.equalsIgnoreCase("status")
-
-                    || playerInput.equalsIgnoreCase("board")) {
-                board.displayBoardInfo(players);
-                displayAllPlayersLocations();
-
-                continue;
-            } // player quits game and loop continues if there are players remaing
-            if (playerInput.equalsIgnoreCase("quit")) {
-                board.removePlayer(players, playerIndex);
-                continue;
-            }
-            // end game
-            if (playerInput.equalsIgnoreCase("end")) {
-                endOfGame();
-                // calc score
-                break;
-
-            }
-
-            // skipping turn based on displayplayerOption method
-            if (playerInput.equalsIgnoreCase("skip")) {
-                nextTurn();
-                continue;
-            }
-            if (currentPlayer.isWorking() && playerInput.equals("3")) {
-                nextTurn();
-                continue;
-            }
-            if (!currentRoom.isSet() && !currentRoom.getRoomName().equalsIgnoreCase("office")
-                    && playerInput.equals("2")) {
-                nextTurn();
-                continue;
-            } // trailer only
-            if (currentRoom.isSet() && currentRoom.hasActiveScene() && !currentRoom.getAvailibleRoles().isEmpty()
-                    && playerInput.equals("4")) {
-                nextTurn();
-                continue;
-            }
-            if (currentRoom.isSet() && !currentRoom.hasActiveScene() && playerInput.equals("3")) {
-                nextTurn();
-                continue;
-            }
-            if (playerInput.equalsIgnoreCase("skip")) {
-                nextTurn();
-                continue;
-
-            }
-            // player availible actions based on if player is working
-            if (currentPlayer.isWorking()) {
-                playerWorking();
-
-            } else {
-                playerNotworking();
-            }
-            if (board.isDayOver()) {
-                endOfDay();
-
-            }
-        }
-    }
-
-    public void displayPlayerOptions(Player currP) {
-        currentRoom = currP.getCurrentRoom();
-        if (!currP.isWorking()) {
-            if (!currentRoom.isSet()) {
-                // Non‑set rooms: trailer or office
-                if (currentRoom.getRoomName().equalsIgnoreCase("office")) {
-                    System.out.println("1| Move , 2| Upgrade, 3| Skip");
-                } else {
-                    System.out.println("1| Move , 2| Skip");
-                }
-            } else if (currentRoom.hasActiveScene() && !currentRoom.getAvailibleRoles().isEmpty()) {
-                System.out.println("1| Move , 2| Take role , 3| Upgrade,  4| Skip");
-            } else {
-                // No active scene and no available roles
-                System.out.println("1| Move, 2| Upgrade,  3| Skip");
-            }
-        } else if (currP.isWorking()) {
-            System.out.println("1| act , 2 | rehearse, 3| skip");
-        }
-    }
-
-    public void playerNotworking() {
-        
-        if (playerInput.equals("move") || playerInput.equals("1")) {
-            System.out.println("You are currently in " + currentRoom.getRoomName());
-            System.out.println("Enter Set number or Set name to move to (or skip) :");
-            currentRoom.displayNieghbors();
-            boolean moved = false;
-            while (!moved) {
-                playerInput = input.nextLine().trim();
-                if (playerInput.equalsIgnoreCase("skip"))
-                    break;
-                moved = action.Move(currentPlayer, playerInput);
-            }
-            if (moved) {
-                Room newRoom = currentPlayer.getCurrentRoom();
-                if (newRoom.isSet() && newRoom.hasActiveScene()) {
-                    System.out.println("Would you like to take a role (1.| Yes) or ( 2.| no)");
-                    playerInput = input.nextLine().trim();
-                    if (playerInput.toLowerCase().startsWith("yes") || playerInput.equals("1")) {
-                        System.out.println("Enter Role name or number (or skip): ");
-                        newRoom.displayRoleOption(currentPlayer.getRank());
-                        playerInput = input.nextLine().trim();
-                        action.takeRole(currentPlayer, playerInput);
+            // Offer take role if new room has active scene with roles in range
+            if (currentRoom.isSet() && currentRoom.hasActiveScene()
+                    && !currentRoom.getAvailibleRoles().isEmpty()) {
+                boolean hasAvailableRole = false;
+                for (Role r : currentRoom.getAvailibleRoles()) {
+                    if (r.getRequiredRank() <= currentPlayer.getRank()) {
+                        hasAvailableRole = true;
+                        break;
                     }
                 }
-            }
-            nextTurn();
-            return;
-        }
-
-        
-        boolean isOffice = currentRoom.getRoomName().equalsIgnoreCase("office");
-        boolean isSet = currentRoom.isSet();
-        boolean hasActiveScene = currentRoom.hasActiveScene();
-        boolean hasAvailableRoles = !currentRoom.getAvailibleRoles().isEmpty();
-
-        
-        if (isOffice) {
-            if (playerInput.equals("2") || playerInput.equalsIgnoreCase("upgrade")) {
-                action.displayUpgradeOptions(currentPlayer); 
-                String upgradeInput = input.nextLine().trim();
-                String[] parts = upgradeInput.split(" ");
-                if (parts.length == 2) {
-                    action.upgradeRank(currentPlayer, parts[0], parts[1]);
+                if (hasAvailableRole) {
+                    view.offerTakeRole();
                 } else {
-                    System.out.println("Enter Rank and Payment type (d| dollars) or (c| credits) ");
-                    
+                    nextTurn();
                 }
-                nextTurn();
-            } else if (playerInput.equals("3") || playerInput.equalsIgnoreCase("skip")) {
-                nextTurn();
             } else {
-                System.out.println("Invalid input. In office: 1=Move, 2=Upgrade, 3=Skip");
-            }
-            return;
-        }
-
-        
-        if (isSet && hasActiveScene && hasAvailableRoles) {
-            if (playerInput.equals("2") || playerInput.equalsIgnoreCase("take role")) {
-                System.out.println("Enter Role name or number (or skip): ");
-                currentRoom.displayRoleOption(currentPlayer.getRank());
-                playerInput = input.nextLine().trim();
-                action.takeRole(currentPlayer, playerInput);
                 nextTurn();
-            } else if (playerInput.equals("3") || playerInput.equalsIgnoreCase("upgrade")) {
-                System.out.println("You must be in the casting office to upgrade.");
-            } else if (playerInput.equals("4") || playerInput.equalsIgnoreCase("skip")) {
-                nextTurn();
-            } else {
-                System.out.println("Invalid input. Options: 1=Move, 2=Take role, 3=Upgrade, 4=Skip");
             }
-            return;
-        }
-
-
-        if (isSet && (!hasActiveScene || !hasAvailableRoles)) {
-            if (playerInput.equals("2") || playerInput.equalsIgnoreCase("upgrade")) {
-                System.out.println("You must be in the casting office to upgrade.");
-            } else if (playerInput.equals("3") || playerInput.equalsIgnoreCase("skip")) {
-                nextTurn();
-            } else {
-                System.out.println("Invalid input. Options: 1=Move, 2=Upgrade, 3=Skip");
-            }
-            return;
-        }
-
-        // 6. TRAILER (non‑set, non‑office)
-        if (!isSet && !isOffice) {
-            if (playerInput.equals("2") || playerInput.equalsIgnoreCase("skip")) {
-                nextTurn();
-            } else {
-                System.out.println("Invalid input. Options: 1=Move, 2=Skip");
-            }
+        } else {
+            view.log("Cannot move to " + targetRoom.getRoomName() + ".");
         }
     }
 
-    public void playerWorking() {
-        if (playerInput.equalsIgnoreCase("act") || playerInput.equals("1")) {
-            action.act(currentPlayer);
-            nextTurn();
-        } else if (playerInput.equals("2") || playerInput.equalsIgnoreCase("rehearse")) {
-            action.Rehearse(currentPlayer);
+    public void TakeRoleAction(Role role) {
+        if (role == null)
+            return;
+        action.takeRole(currentPlayer, role.getRoleName());
+        if (currentPlayer.getCurrentRole() != null) {
+            view.log(currentPlayer.getPlayerName()
+                    + " took role: " + role.getRoleName());
+            view.refreshView();
             nextTurn();
         } else {
-            System.out.println("Invalid input for working player");
-            System.out.println("1| act , 2 | rehearse, 3| skip");
+            view.log("Could not take role: " + role.getRoleName());
         }
-
     }
 
+    public void actAction() {
+        if (!currentPlayer.isWorking()) {
+            view.log("You need a role to act!");
+            return;
+        }
+        action.act(currentPlayer);
+        view.log(currentPlayer.getPlayerName() + " acted.");
+        view.refreshView();
+        nextTurn();
+    }
+
+    public void RehearseAction() {
+        if (!currentPlayer.isWorking()) {
+            view.log("You need a role to rehearse!");
+            return;
+        }
+        if (!action.validateRehearse(currentPlayer)) {
+            view.log("Guaranteed success must Act!");
+            return;
+        }
+        action.Rehearse(currentPlayer);
+        view.log(currentPlayer.getPlayerName() + " rehearsed. Tokens: "
+                + currentPlayer.getRehearsalTokens());
+        view.refreshView();
+        nextTurn();
+    }
+
+    public void skipAction() {
+        view.log(currentPlayer.getPlayerName() + " skipped.");
+        nextTurn();
+    }
+
+    public void quitAction() {
+        view.log(currentPlayer.getPlayerName() + " has quit.");
+        board.removePlayer(players, playerIndex);
+
+        if (players.isEmpty()) {
+            endOfGame();
+            return;
+        }
+        if (playerIndex >= players.size()) {
+            playerIndex = 0;
+        }
+        currentPlayer = players.get(playerIndex);
+        currentRoom = currentPlayer.getCurrentRoom();
+        view.refreshView();
+    }
+public void endAction() { 
+    endOfGame(); }
     public void displayRules() {
 
         System.out.println("To Play:\n" + //
@@ -333,6 +236,16 @@ public class Deadwood {
         if (playerIndex >= players.size()) {
             playerIndex = 0;
         }
+        currentPlayer = players.get(playerIndex);
+        currentRoom = currentPlayer.getCurrentRoom();
+
+        if (board.isDayOver()) {
+            endOfDay();
+            return;
+        }
+
+        view.refreshView();
+        view.log(currentPlayer.getPlayerName() + "'s turn");
 
     }
 
@@ -365,13 +278,19 @@ public class Deadwood {
         if (board.isGameOver()) {
             endOfGame();
         }
+        currentPlayer = players.get(playerIndex);
+        currentRoom = currentPlayer.getCurrentRoom();
+        view.log("Day " + board.getDayCount() + " begins! ");
+        view.refreshView();
 
     }
 
     public void endOfGame() {
         System.out.println("Game over!");
+        view.showEndGame();
         board.displayScore(players);
 
-    }
+    }}
 
-}
+  
+
