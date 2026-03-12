@@ -81,7 +81,15 @@ public class ParseXML {
                                 int requiredRank = Integer
                                         .parseInt(partNode.getAttributes().getNamedItem("level").getNodeValue());
                                 String line = readLine(partNode);
-                                room.addExtraRole(new Role(roleName, line, requiredRank, false));
+                                Role extraRole = new Role(roleName, line, requiredRank, false);
+                                // read the role slot position (absolute coords from board.xml)
+                                NodeList roleAreas = ((Element) partNode).getElementsByTagName("area");
+                                if (roleAreas.getLength() > 0) {
+                                    Element areaEl = (Element) roleAreas.item(0);
+                                    extraRole.setRoleX(Integer.parseInt(areaEl.getAttribute("x")));
+                                    extraRole.setRoleY(Integer.parseInt(areaEl.getAttribute("y")));
+                                }
+                                room.addExtraRole(extraRole);
 
                             }
 
@@ -97,19 +105,20 @@ public class ParseXML {
         Node trailerNode = root.getElementsByTagName("trailer").item(0);
         if (trailerNode != null && trailerNode.getNodeType() == Node.ELEMENT_NODE) {
             Room trailer = new Room("trailer", false);
-          Element trailerEl = (Element) trailerNode;
+            Element trailerEl = (Element) trailerNode;
             NodeList tareas = trailerEl.getElementsByTagName("area");
             if (tareas.getLength() > 0) {
                 Element a = (Element) tareas.item(0);
                 trailer.setArea(Integer.parseInt(a.getAttribute("x")),
-                                Integer.parseInt(a.getAttribute("y")),
-                                Integer.parseInt(a.getAttribute("w")),
-                                Integer.parseInt(a.getAttribute("h")));
+                        Integer.parseInt(a.getAttribute("y")),
+                        Integer.parseInt(a.getAttribute("w")),
+                        Integer.parseInt(a.getAttribute("h")));
             }
             rooms.put("trailer", trailer);
             adjacentMapping.put("trailer", readAdjacentRooms((Element) trailerNode));
-        
+
         }
+
         // parsing casting office
         Node castingNode = root.getElementsByTagName("office").item(0);
         if (castingNode != null && castingNode.getNodeType() == Node.ELEMENT_NODE) {
@@ -120,9 +129,9 @@ public class ParseXML {
             if (oareas.getLength() > 0) {
                 Element a = (Element) oareas.item(0);
                 castingRoom.setArea(Integer.parseInt(a.getAttribute("x")),
-                                    Integer.parseInt(a.getAttribute("y")),
-                                    Integer.parseInt(a.getAttribute("w")),
-                                    Integer.parseInt(a.getAttribute("h")));
+                        Integer.parseInt(a.getAttribute("y")),
+                        Integer.parseInt(a.getAttribute("w")),
+                        Integer.parseInt(a.getAttribute("h")));
             }
             rooms.put("office", castingRoom);
             adjacentMapping.put("office", readAdjacentRooms((Element) castingNode));
@@ -141,7 +150,6 @@ public class ParseXML {
             }
         }
         return rooms;
-
     }
 
     private ArrayList<String> readAdjacentRooms(Element roomElement) {
@@ -193,23 +201,30 @@ public class ParseXML {
                         Node partNode = partNodes.item(j);
 
                         if (partNode.getNodeType() == Node.ELEMENT_NODE) {
-
-                            String roleName = partNode.getAttributes().getNamedItem("name").getNodeValue();
-                            int requiredRank = Integer
-                                    .parseInt(partNode.getAttributes().getNamedItem("level").getNodeValue());
+                            Element partEl = (Element) partNode;
+                            String roleName = partEl.getAttribute("name");
+                            int requiredRank = Integer.parseInt(partEl.getAttribute("level"));
                             String line = readLine(partNode);
                             Role starRole = new Role(roleName, line, requiredRank, true);
+                            // read role slot position (relative to card/room origin)
+                            NodeList roleAreas = partEl.getElementsByTagName("area");
+                            if (roleAreas.getLength() > 0) {
+                                Element areaEl = (Element) roleAreas.item(0);
+                                starRole.setRoleX(Integer.parseInt(areaEl.getAttribute("x")));
+                                starRole.setRoleY(Integer.parseInt(areaEl.getAttribute("y")));
+                            }
                             starRoles.add(starRole);
                         }
                     }
-                    Scene sceneCard = new Scene(sceneName, sceneDescription, movieBudget, sceneNumber, starRoles);
+                    String imgPath = cardElement.getAttribute("img"); // e.g. "01.png"
+                    Scene sceneCard = new Scene(sceneName, sceneDescription, movieBudget, sceneNumber, imgPath,
+                            starRoles);
                     deck.add(sceneCard);
                 }
 
             }
-           
 
         }
-         return deck;
+        return deck;
     }
 }

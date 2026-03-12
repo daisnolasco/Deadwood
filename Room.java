@@ -11,11 +11,12 @@ public class Room {
     private List<Room> adjacentRooms = new ArrayList<>();
     List<Role> availibleRoles = new ArrayList<>();
     private boolean isSet;
-
     private int x;
     private int y;
     private int w;
     private int h;
+
+   
 
     // Room constructor for trailer and casting office
     public Room(String roomName, boolean isSet) {

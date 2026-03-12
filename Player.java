@@ -7,8 +7,8 @@ public class Player {
   private int rehearsalTokens;
   private Room currentRoom;
   private Role currentRole;
-
-  public Player(String playerName, int rank, int credits, int dollars, Room currentRoom) {
+private char color = 'r';
+ public Player(String playerName, int rank, int credits, int dollars, Room currentRoom) {
     this.playerName = playerName;
     this.rank = rank;
     this.credits = credits;
@@ -16,7 +16,6 @@ public class Player {
     this.rehearsalTokens = 0;
     this.currentRoom = currentRoom;
     this.currentRole = null;
-
   }
   /* Player stats getters */
 
@@ -47,15 +46,11 @@ public class Player {
   public Role getCurrentRole() {
     return currentRole;
   }
-private char color; 
-
 public char getColor() {
-    return color;
-}
+   return color; }
+  public void setColor(char color) { 
+    this.color = color; }
 
-public void setColor(char color) {
-    this.color = color;
-}
   // Player stats setters //
 
   public void setPlayerName(String playerName) {
@@ -140,7 +135,7 @@ public void setColor(char color) {
       roleName = currentRole.getRoleName();
     }
 
-    return "Name: " + playerName
+    return "Name: " + playerName        + "\nColor: " + color
         + "\nRank: " + rank
         + "\nDollars: " + dollars
         + "\nCredits: " + credits

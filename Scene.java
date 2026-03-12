@@ -8,16 +8,16 @@ public class Scene {
     private List<Role> starRoles = new ArrayList<>();
     List<Role> availibleStarRoles = new ArrayList<>();
  private String imgPath;
-    public Scene(String sceneName, String sceneDesciption, int movieBudget,int sceneNumber, ArrayList<Role> StarRoles) {
+    public Scene(String sceneName, String sceneDescription, int movieBudget,
+                 int sceneNumber, String imgPath, ArrayList<Role> starRoles) {
         this.sceneName = sceneName;
-        this.sceneDescription = sceneDesciption;
+        this.sceneDescription = sceneDescription;
         this.movieBudget = movieBudget;
         this.sceneNumber = sceneNumber;
         this.imgPath = imgPath;
-        if (StarRoles != null) {
-            this.starRoles.addAll(StarRoles);
+        if (starRoles != null) {
+            this.starRoles.addAll(starRoles);
         }
-
     }
 
     // setters and getters
@@ -36,6 +36,9 @@ public class Scene {
       public int getSceneNum() {
         return sceneNumber;
     }
+    public String getImgPath()          { 
+        return imgPath; }
+
     public List<Role> getStarRoles() {
         return starRoles;
     }
@@ -76,5 +79,7 @@ public class Scene {
      
 
     }
+
+    
 
 }

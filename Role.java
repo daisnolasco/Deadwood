@@ -4,8 +4,8 @@ public class Role {
     private int requiredRank;
     private boolean isStar;;
     private Player assignedPlayer;
-
-        
+private int roleX;
+    private int roleY;
     public Role(String roleName, String line, int requiredRank,boolean isStar) {
         
         this.roleName = roleName;
@@ -45,7 +45,10 @@ public class Role {
         return assignedPlayer;
 
     }
-
+public int getRoleX() { return roleX; }
+    public int getRoleY() { return roleY; }
+    public void setRoleX(int x) { this.roleX = x; }
+    public void setRoleY(int y) { this.roleY = y; }
     // sets player to role
 
     public void setAssignedPlayer(Player player) {

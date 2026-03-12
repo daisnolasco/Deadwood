@@ -2,7 +2,7 @@ import java.util.*;
 //singletone inter
 
 public class Board {
-     private static Board instance = null;
+    private static Board instance = null;
     private static final int totalNumSets = 10;
     private Room trailers;
     private Room castingOffice;
@@ -12,7 +12,7 @@ public class Board {
     private Map<String, Room> rooms;
     private List<Scene> sceneDeck;
 
-private Board() {
+    private Board() {
         rooms = new HashMap<>();
         sceneDeck = new ArrayList<>();
         createBoard();
@@ -31,7 +31,6 @@ private Board() {
     public static void resetInstance() {
         instance = null;
     }
-  
 
     private void createBoard() {
         // adds rooms to board and shot counters
@@ -117,11 +116,10 @@ private Board() {
         System.out.println(p.getPlayerName() + " Has left the game");
         if (p.getCurrentRoom() != null) {
             p.getCurrentRoom().removePlayer(p);
-           
 
         }
-         players.remove(playerIndex);
-                return p;
+        players.remove(playerIndex);
+        return p;
 
     }
 
@@ -140,7 +138,8 @@ private Board() {
         }
         return sets;
     }
-//move players to trailer on a new day 
+
+    // move players to trailer on a new day
     public void moveToTrailer(List<Player> players) {
         for (Player player : players) {
             if (player.getCurrentRoom() != null) {
@@ -151,11 +150,12 @@ private Board() {
             trailers.addPlayer(player);
             player.leaveRole();
         }
-    }//move player to casting office 
-    public void moveToOffice(Player player){
-        Room currentRoom=player.getCurrentRoom();
-        if(!currentRoom.getRoomName().equalsIgnoreCase("office")){
-            Room office =getCastingOffice();
+    }// move player to casting office
+
+    public void moveToOffice(Player player) {
+        Room currentRoom = player.getCurrentRoom();
+        if (!currentRoom.getRoomName().equalsIgnoreCase("office")) {
+            Room office = getCastingOffice();
             currentRoom.removePlayer(player);
             player.setCurrentRoom(office);
             office.addPlayer(player);
@@ -164,15 +164,11 @@ private Board() {
         }
     }
 
-    
-
     public void displayPlayers(List<Player> players) {
         System.out.println("Total players: " + players.size());
         System.out.println("Players :");
         for (Player p : players) {
             p.displayPlayerInfo();
-
-        
 
         }
 
@@ -196,16 +192,28 @@ private Board() {
                 winnerScore = score;
                 winner = player;
             }
-            
 
         }
         if (winner != null) {
-                System.out.println("Winner: " + winner.getPlayerName());
-            } else {
-                System.out.println("No winner ");
-            }
+            System.out.println("Winner: " + winner.getPlayerName());
+        } else {
+            System.out.println("No winner ");
+        }
     }
-    //helpful setters and getting 
+
+    public Player getWinner(List<Player> players) {
+        Player winner = null;
+        int winnerScore = 0;
+        for (Player p : players) {
+            int score = p.playerScore();
+            if (score > winnerScore) {
+                winnerScore = score;
+                winner = p;
+            }
+        }
+        return winner;
+    }
+    // helpful setters and getting
 
     public Room getRoom(String roomName) {
         return rooms.get(roomName);
@@ -224,7 +232,5 @@ private Board() {
     public int getActiveScenes() {
         return activeScenes;
     }
-
- 
 
 }
