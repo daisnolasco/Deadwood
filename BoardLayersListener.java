@@ -1,3 +1,4 @@
+
 /*
 Deadwood GUI helper file
 Author: Moushumi Sharmin
@@ -5,415 +6,371 @@ This file shows how to create a simple GUI using Java Swing and Awt Library
 Classes Used: JFrame, JLabel, JButton, JLayeredPane
 */
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import java.util.List;
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.imageio.ImageIO;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
 
 public class BoardLayersListener extends JFrame implements GameView {
-
     // JLabels
     JLabel boardlabel;
-    Deadwood controller ;
     JLabel cardlabel;
     JLabel playerlabel;
     JLabel mLabel;
+    // face-down cards
+    List<JLabel> cardBackLabels = new ArrayList<>();
+    Map<Room, JLabel> cardFrontLabels = new HashMap<>();
+    Map<Player, JLabel> playerTokens = new HashMap<>();
+    // dice tokens
+    int numPlayers;
+    List<String> playerNames = new ArrayList<>();
     // JButtons
     JButton bAct;
     JButton bRehearse;
     JButton bMove;
     // JLayered Pane
     JLayeredPane bPane;
-    // Text box under buttons
-    JTextArea textBox;
-Map<Player, JLabel> playerTokens = new HashMap<>();
-List<JLabel> cardBackLabels = new ArrayList<>();
+    // Controller for actions
+    Deadwood controller;
+    // left panel for player stats
+    PlayerPanelView playerPanel;
+    // buttons /availible action panels
+    ActionPanelView actionPanel;
+    // Constructor
+    // to scale board and components
+    double scale;
 
-    int numPlayers;
-    List<String> playerNames = new ArrayList<>();
-
-    // player cards
-    JPanel leftPanel;
-
-    // scaled board size
-    static final int origW = 1200;
-    static final int origH = 900;
-    static final int tokenSize = 46;
-    private int boardW;
-    private int boardH;
-    private double scale = 1.0;
-
+    int tokenSize;
     // Colors
-    final Color tanBackground = new Color(210, 190, 160);
-    static final Color darkerTan = new Color(180, 155, 120);
-    static final Color white = Color.WHITE;
-    static final Color green = new Color(80, 160, 80);
-    static final Color blue = new Color(80, 80, 180);
-    static final Color brown = new Color(140, 100, 50);
-    static final Color red = new Color(200, 40, 40);
+
+    Color tan = new Color(210, 190, 160);
+    Color darkerTan = new Color(180, 155, 120);
+    Color red = new Color(200, 40, 40);
 
     public BoardLayersListener(Deadwood controller) {
+        // Set the title of the JFrame
         super("Deadwood");
-       this.controller = controller;
-    this.controller.setView(this);
+        // attempt to scale board
+        this.controller = controller;
 
+        // // Shrink for the left/right panels, board = 1200 x 900
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+        double scaleW = (screen.width - 340) / 1200.00;
+        double scaleH = (screen.height - 80) / 900.00;
+        scale = Math.min(scaleW, scaleH);
+        if (scale > 1.0)
+            scale = 1.0;
+        // Board after scaling
+        int boardW = (int) (1200 * scale);
+        int boardH = (int) (900 * scale);
+        // scale player token
+        tokenSize = (int) (40 * scale);
+        if (tokenSize < 20)
+            tokenSize = 20;
+        // Set the exit option for the JFrame
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-
-        // Scale board to fit screen so it never cuts off
-        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-        scale = Math.min(1.0, Math.min(
-                (double) (screen.width - 340) / origW,
-                (double) (screen.height - 120) / origH));
-        boardW = (int) (origW * scale);
-        boardH = (int) (origH * scale);
-
-        // Title
+        // title stying
         JLabel title = new JLabel("Deadwood Game", SwingConstants.CENTER);
-        title.setFont(new Font("Serif", Font.BOLD, 32));
+        title.setFont(new Font("SansSerif", Font.BOLD, 32));
         title.setOpaque(true);
-        title.setBackground(white);
+        title.setBackground(Color.WHITE);
         title.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
         add(title, BorderLayout.NORTH);
-leftPanel = new JPanel();
-    leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-    leftPanel.setBackground(tanBackground);
-    leftPanel.setPreferredSize(new Dimension(180, boardH));
-    add(leftPanel, BorderLayout.WEST);
 
-    boardPanel();
-    rightButtonMenu();
-    updatePlayerPanel();  // builds textBox — must come before southPanel uses it
-
-        // exit button
-        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-
-        JButton btnEnd = new JButton("End Game X");
-        btnEnd.setBackground(red);
-        btnEnd.setFont(new Font("SansSerif", Font.BOLD, 13));
-
-        btnEnd.setFocusPainted(false);
-        btnEnd.addActionListener(e -> textBox.append(" End Game\n")); // fixed: textBox now exists
-        southPanel.add(btnEnd);
-        add(southPanel, BorderLayout.SOUTH);
-
-        setSize(boardW + 340, boardH + 80);
-        setLocationRelativeTo(null);
-    }void placeCardBacks() {
-    for (JLabel label : cardBackLabels) {
-        bPane.remove(label);
-    }
-    cardBackLabels.clear();
-
-    ImageIcon backIcon = new ImageIcon("/Images/Cardback.png");
-
-    for (Room room : controller.getBoard().getAllSets()) {
-        JLabel back = new JLabel(backIcon);
-
-        int x = room.getX();
-        int y = room.getY();
-
-        back.setBounds(
-                x,
-                y,
-                backIcon.getIconWidth(),
-                backIcon.getIconHeight()
-        );
-
-        cardBackLabels.add(back);
-        bPane.add(back, Integer.valueOf(1));
-    }
-
-    bPane.repaint();
-}
-
-    // left panel with player stats
-
-   void updatePlayerPanel() {
-
-    if (leftPanel == null || controller == null) {
-        return;
-    }
-
-    leftPanel.removeAll();
-
-    JLabel title = new JLabel("Players");
-    title.setFont(new Font("SansSerif", Font.BOLD, 14));
-    leftPanel.add(title);
-    leftPanel.add(new JLabel(" "));
-
-    for (Player p : controller.getPlayers()) {
-
-        if (p == controller.getCurrentPlayer()) {
-            leftPanel.add(new JLabel("Current Player"));
-        }
-
-        JTextArea info = new JTextArea(p.getDisplayInfo());
-        info.setEditable(false);
-        info.setBackground(tanBackground);
-        info.setLineWrap(true);
-        info.setWrapStyleWord(true);
-        info.setBorder(BorderFactory.createEmptyBorder(4,4,4,4));
-        info.setMaximumSize(new Dimension(160,120));
-
-        leftPanel.add(info);
-     
-    }
-
-    leftPanel.revalidate();
-    leftPanel.repaint();
-}
-       
-    void boardPanel() {
+        // Create the JLayeredPane to hold the display, cards, dice and buttons
         bPane = new JLayeredPane();
         bPane.setPreferredSize(new Dimension(boardW, boardH));
-        bPane.setBackground(tanBackground);
+        bPane.setBackground(tan);
         bPane.setOpaque(true);
-
-        // board image
+        // Create the deadwood board
         boardlabel = new JLabel();
         ImageIcon icon = new ImageIcon("Images/board.jpg");
-        Image scaled = icon.getImage()
-                .getScaledInstance(boardW, boardH, Image.SCALE_SMOOTH);
-        boardlabel.setIcon(new ImageIcon(scaled));
+        Image scaledBoard = icon.getImage().getScaledInstance(boardW, boardH, Image.SCALE_SMOOTH);
+        boardlabel.setIcon(new ImageIcon(scaledBoard));
         boardlabel.setBounds(0, 0, boardW, boardH);
+        // Add the board to the lowest layer
         bPane.add(boardlabel, new Integer(0));
-
-        // scene card layer
-        cardlabel = new JLabel();
-        ImageIcon cIcon = new ImageIcon("Images/CardBack.png");
-        cardlabel.setIcon(cIcon);
-        cardlabel.setBounds(20, 65, cIcon.getIconWidth() + 2, cIcon.getIconHeight());
-        cardlabel.setOpaque(true);
-        bPane.add(cardlabel, new Integer(1));
-
-        // player token
-        playerlabel = new JLabel();
-        ImageIcon pIcon = new ImageIcon("Images/r2.png");
-        playerlabel.setIcon(pIcon);
-        playerlabel.setBounds(114, 227, 46, 46);
-        playerlabel.setVisible(false);
-        bPane.add(playerlabel, new Integer(3));
-
         add(bPane, BorderLayout.CENTER);
-    } ImageIcon getPlayerDice(Player p) {
+        // player stats
+        playerPanel = new PlayerPanelView(controller,this);
+        add(playerPanel, BorderLayout.WEST);
 
-    char color = p.getColor();
-    int rank = p.getRank();
-
-    String path = "Images/Dice/" + color + rank + ".png";
-
-    return new ImageIcon(path);
-}
-
-    void rightButtonMenu() {
-               mLabel = new JLabel("MENU", SwingConstants.CENTER);
-        mLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
-        mLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        mLabel.setMaximumSize(new Dimension(140, 24));
-        JPanel rightPanel = new JPanel();
-        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-        rightPanel.setBackground(tanBackground);
-        rightPanel.setPreferredSize(new Dimension(160, 100));
-        rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 8, 10, 8));
-rightPanel.add(mLabel);
-        rightPanel.add(Box.createVerticalStrut(8));
-        // Action buttons
-        bAct      = makeButton("Act",       green);
-        bRehearse = makeButton("Rehearse",  green);
-        bMove     = makeButton("Move",      green);
-        JButton bSkip = makeButton("Skip Turn", brown);
-        JButton bEnd  = makeButton("Quit",  red);
-
-        bAct.addActionListener(e -> controller.actAction());
-bRehearse.addActionListener(e -> controller.RehearseAction());
-bMove.addActionListener(e -> textBox.append("Move clicked\n"));
-bSkip.addActionListener(e -> controller.skipAction());
-bEnd.addActionListener(e -> controller.endAction());
-
-        rightPanel.add(bAct);     
-         rightPanel.add(Box.createVerticalStrut(6));
-        rightPanel.add(bRehearse);
-         rightPanel.add(Box.createVerticalStrut(6));
-        rightPanel.add(bMove);     
-        rightPanel.add(Box.createVerticalStrut(6));
-        rightPanel.add(bSkip);     
-        rightPanel.add(Box.createVerticalStrut(6));
-        rightPanel.add(bEnd);      
-        rightPanel.add(Box.createVerticalStrut(12));
-
-        // Game log text box
-        textBox = new JTextArea(10, 14);
-        textBox.setEditable(false);
-        textBox.setLineWrap(true);
-        textBox.setWrapStyleWord(true);
-        textBox.setBackground(new Color(245, 235, 210));
-        JScrollPane scroll = new JScrollPane(textBox);
-        scroll.setBorder(BorderFactory.createTitledBorder("Game Log"));
-        rightPanel.add(scroll);
-
-        add(rightPanel, BorderLayout.EAST);
+        // Create the Menu for action buttons on right panel
+        actionPanel = new ActionPanelView(controller, this);
+        add(actionPanel, BorderLayout.EAST);
+        // red exit button under stats pannel
+        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton btnEnd = new JButton("End Game  X");
+        btnEnd.setBackground(red);
+        btnEnd.setForeground(Color.WHITE);
+        btnEnd.setFont(new Font("SansSerif", Font.BOLD, 13));
+        btnEnd.setFocusPainted(false);
+        btnEnd.setOpaque(true);
+        btnEnd.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(120, 30, 30), 2),
+            BorderFactory.createEmptyBorder(5, 12, 5, 12)));
+        btnEnd.addActionListener(e -> {
+            boolean confirm = gameConfirm("End Game",
+                "End the game now and show final scores?");
+            if (confirm) controller.endAction();
+        });
+        southPanel.add(btnEnd);
+        add(southPanel, BorderLayout.SOUTH);
+         setSize(boardW + 340, boardH + 80);
+        setLocationRelativeTo(null);
     }
 
-    JButton makeButton(String text, Color color) {
-        JButton btn = new JButton(text);
-        btn.setBackground(color);
-        btn.setFont(new Font("SansSerif", Font.BOLD, 13));
-   
-        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btn.setMaximumSize(new Dimension(140, 34));
-        btn.setPreferredSize(new Dimension(140, 34));
-        return btn;
-    }void createPlayerTokens() {
-    for (Player p : controller.getPlayers()) {
-        if (!playerTokens.containsKey(p)) {
-            JLabel token = new JLabel(getPlayerDice(p));
-            token.setSize(tokenSize, tokenSize);
-            playerTokens.put(p, token);
-            bPane.add(token, Integer.valueOf(3));
-        }
-    }
-}
-
-void updatePlayerTokens() {
-    int index = 0;
-
-    for (Player p : controller.getPlayers()) {
-        JLabel token = playerTokens.get(p);
-
-        if (token == null) {
-            continue;
-        }
-
-     
-    }
-
-    bPane.repaint();
-}
-void runSetupDialogs() {
-
-    String[] options = { "2", "3", "4", "5", "6", "7", "8" };
-
-    JList<String> playerList = new JList<>(options);
-    playerList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    playerList.setSelectedIndex(0);
-
-    int result = JOptionPane.showConfirmDialog(
-            this,
-            new JScrollPane(playerList),
-            "How many players?",
-            JOptionPane.OK_CANCEL_OPTION,
-            JOptionPane.QUESTION_MESSAGE);
-
-    if (result != JOptionPane.OK_OPTION) {
-        System.exit(0);
-    }
-
-    numPlayers = Integer.parseInt(playerList.getSelectedValue());
-    textBox.append(" Players: " + numPlayers + "\n");
-
-    playerNames.clear();
-
-    for (int i = 1; i <= numPlayers; i++) {
-
-        String name = null;
-
-        while (name == null || name.trim().isEmpty()) {
-
-            name = JOptionPane.showInputDialog(
-                    this,
-                    "Enter name for Player " + i + ":",
-                    "Player " + i,
-                    JOptionPane.QUESTION_MESSAGE);
-
-            if (name == null) {
-                System.exit(0);
-            }
-
-            if (name.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Name cannot be empty.",
-                        "Invalid Name",
-                        JOptionPane.WARNING_MESSAGE);
-            }
-        }
-
-        playerNames.add(name.trim());
-        textBox.append(" Player " + i + ": " + name + "\n");
-    }
-
-  textBox.append("Setup complete! Starting game...\n");
-
-controller.setNumPlayers(numPlayers);
-controller.setupGame(playerNames);
-
-placeCardBacks();
-createPlayerTokens();
-updatePlayerTokens();
-updatePlayerPanel();
-}
-   
-        // TODO: pass to controller when MVC is wired up
-        // controller.setNumPlayers(numPlayers);
-        // controller.setupGame(playerNames);
-    
-
-    // This class implements Mouse Events (from original helper)
+    // This class implements Mouse Events
     class boardMouseListener implements MouseListener {
         public void mouseClicked(MouseEvent e) {
-            if (e.getSource() == bAct) {
-                playerlabel.setVisible(true);
-                textBox.append("Act clicked\n");
-            } else if (e.getSource() == bRehearse) {
-                textBox.append("Rehearse clicked\n");
-            } else if (e.getSource() == bMove) {
-                textBox.append("Move clicked\n");
-            }
+            ((JButton) e.getSource()).setBackground(
+                    ((JButton) e.getSource()).getBackground().brighter());
         }
 
-        public void mousePressed(MouseEvent e)  {}
-        public void mouseReleased(MouseEvent e) {}
-        public void mouseEntered(MouseEvent e)  {}
-        public void mouseExited(MouseEvent e)   {}
+        public void mousePressed(MouseEvent e) {
+            ((JButton) e.getSource()).setBackground(
+                    ((JButton) e.getSource()).getBackground().darker());
+        }
+
+        public void mouseReleased(MouseEvent e) {
+            ((JButton) e.getSource()).setBackground(
+                    ((JButton) e.getSource()).getBackground().brighter());
+        }
+
+        public void mouseEntered(MouseEvent e) {
+        
+        }
+
+        public void mouseExited(MouseEvent e) {
+            ((JButton) e.getSource()).setBackground(
+                    ((JButton) e.getSource()).getBackground().darker());
+        }
     }
 
-    public static void main(String[] args) {
-Deadwood controller = new Deadwood();
+    void placeCardBacks() {
+        // Remove old card labels before adding fresh ones
+        for (JLabel lbl : cardBackLabels)
+            bPane.remove(lbl);
+        for (JLabel lbl : cardFrontLabels.values())
+            bPane.remove(lbl);
+        cardBackLabels.clear();
+        cardFrontLabels.clear();
+        ImageIcon backRaw = new ImageIcon("Images/Cardback.png");
+        for (Room room : controller.getBoard().getAllSets()) {
+            if (!room.hasActiveScene())
+                continue;
+            // Position and size for card area
+            int x = (int) (room.getX() * scale);
+            int y = (int) (room.getY() * scale);
+            int w = (int) (room.getW() * scale);
+            int h = (int) (room.getH() * scale);
+            boolean playerHere = !room.getPlayersInRoom().isEmpty();
+            if (playerHere && room.getCurrentScene() != null
+                    && room.getCurrentScene().getImgPath() != null) {
+                // Flip card
+                ImageIcon frontIcon = new ImageIcon(new ImageIcon("Images/Card/" + room.getCurrentScene().getImgPath())
+                        .getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
+                JLabel front = new JLabel(frontIcon);
+                front.setBounds(x, y, w, h);
+                cardFrontLabels.put(room, front);
+                bPane.add(front, new Integer(2));
+            }else {
+                // Show face-down card back
+                ImageIcon backIcon = new ImageIcon(
+                    backRaw.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
+                JLabel back = new JLabel(backIcon);
+                back.setBounds(x, y, w, h);
+                cardBackLabels.add(back);
+                bPane.add(back, new Integer(1));
+            }
+               
 
-    BoardLayersListener board = new BoardLayersListener(controller);
-
-    board.setVisible(true);
-
-    SwingUtilities.invokeLater(() -> board.runSetupDialogs());
+        }
+        bPane.revalidate();
+        bPane.repaint();
+        // set player dice
     }
-@Override
-public void refreshView() {
-    updatePlayerPanel();
-    placeCardBacks();
-    createPlayerTokens();
-    updatePlayerTokens();
-    repaint();
-}
 
-@Override
-public void log(String message) {
-    textBox.append(message + "\n");
-}
+    void createPlayerTokens() {
+        List<Player> players = controller.getPlayers();
+        for (int i = 0; i < players.size(); i++) {
+            Player p = players.get(i);
+            if (playerTokens.containsKey(p))
+                continue;
+            JLabel token = new JLabel(getDice(p));
+            token.setSize(tokenSize, tokenSize);
+            playerTokens.put(p, token);
+            bPane.add(token, new Integer(6 + i));
+        }
+    }
 
-@Override
-public void offerTakeRole() {
-    textBox.append("Take role option here\n");
-}
+    void updatePlayerTokens() {
+        // Track how many players are placed in each room so far,
 
-@Override
-public void offerUpgrade() {
-    textBox.append("Upgrade option here\n");
-}
+        List<Player> players = controller.getPlayers();
+        for (int i = 0; i < players.size(); i++) {
+            Player p     = players.get(i);
+            JLabel token = playerTokens.get(p);
+            if (token == null) continue;
+            token.setIcon(getDice(p));
+            Room room = p.getCurrentRoom();
+            Role role = p.getCurrentRole();
+            if (room != null && role != null) {
+                int[] pos = getRolePosition(room, role);
+                token.setBounds(pos[0], pos[1], tokenSize, tokenSize);} /*
+               * else if (room != null) {
+               * // Player is in a room but not on a role — grid inside the room
+               * int slot = roomSlot.getOrDefault(room, 0);
+               * roomSlot.put(room, slot + 1);
+               * 
+               * int col = slot % 4; // up to 4 per row
+               * int row = slot / 4; // second row if 5+ players in same room
+               * int x = (int)(room.getX() * scale) + 4 + col * (tokenSize + 2);
+               * int y = (int)(room.getY() * scale) + 4 + row * (tokenSize + 2);
+               * token.setBounds(x, y, tokenSize, tokenSize);
+               * 
+               * }
+               */ 
+            else {
+                // Fallback: put near top-left of the board
+                token.setBounds(4 + i * (tokenSize + 2), 4, tokenSize, tokenSize);
+            }
+        }
+        bPane.revalidate();
+        bPane.repaint();
+    }
 
-@Override
-public void showEndGame() {
-    JOptionPane.showMessageDialog(this, "Game Over");
-}
+    // card postion
+    int[] getRolePosition(Room room, Role role) {
+        if (role.isStarringRole()) {
+            int x = (int) ((room.getX() + role.getRoleX()) * scale);
+            int y = (int) ((room.getY() + role.getRoleY()) * scale);
+            return new int[] { x, y };
+        } else {
+            int x = (int) (role.getRoleX() * scale);
+            int y = (int) (role.getRoleY() * scale);
+            return new int[] { x, y };
+        }
+    }
+
+    // get and set dice for player
+    ImageIcon getDice(Player p) {
+        String path = "Images/Dice/" + p.getColor() + p.getRank() + ".png";
+        ImageIcon raw = new ImageIcon(path);
+
+            return new ImageIcon(raw.getImage()
+                .getScaledInstance(tokenSize, tokenSize, Image.SCALE_SMOOTH));
+
+
+     
+      
+    }
+
+    void runSetupDialogs() {
+       String[] options = { "2","3","4","5","6","7","8" };
+        String choice = new gameDialogue.Select("How many players?", options)
+            .show(this, "Deadwood Setup");
+        if (choice == null) System.exit(0);
+        numPlayers = Integer.parseInt(choice);
+        playerNames.clear();
+        for (int i = 1; i <= numPlayers; i++) {
+            String name = null;
+            while (name == null || name.trim().isEmpty()) {
+                name = new gameDialogue.Input("Enter name for Player " + i + ":")
+                    .show(this, "Player " + i);
+                if (name == null) System.exit(0);
+                if (name.trim().isEmpty())
+                    new gameDialogue.Message("Name cannot be empty.")
+                        .show(this, "Invalid Name");
+            }
+            playerNames.add(name.trim());
+        }
+        controller.setNumPlayers(numPlayers);
+        controller.setupGame(playerNames);
+        createPlayerTokens();
+        refreshView();
+    
+    }
+
+    // game view interfce - observer
+    @Override
+    public void log(String message) {
+        actionPanel.log(message);
+    }
+
+    // Refresh all panels to show the current game state
+    @Override
+    public void refreshView() {
+        placeCardBacks(); // update scene card visuals
+        updatePlayerTokens(); // move dice tokens to current positions
+        playerPanel.refreshPlayers(); // update player stats on the left
+        actionPanel.refreshButtons(); // show/hide buttons for current player
+    }
+
+   @Override
+    public void showActResult(String message) {
+        new gameDialogue.Message(message).show(this, "Action Result");
+    }
+
+    @Override
+    public void offerTakeRole() {
+        boolean want = new gameDialogue.Confirm(
+                "You moved to a set with available roles. Take a role now?")
+                .show(this, "Take Role?");
+        if (want)
+            actionPanel.showTakeRoleDialog();
+    }
+    @Override
+    public void offerUpgrade() {
+        log("Upgrade Availible -> Use the Upgrade button.");
+    }
+
+    @Override
+    public void showEndGame() {
+        List<Player> players = controller.getPlayers();
+        if (players == null || players.isEmpty()) return;
+        Player winner = controller.getBoard().getWinner(players);
+        StringBuilder sb = new StringBuilder("Final Scores:\n");
+        for (Player p : players)
+            sb.append(p == winner ? "* " : "  ")
+              .append(p.getPlayerName()).append(": ").append(p.playerScore()).append("\n");
+        if (winner != null)
+            sb.append("\n").append(winner.getPlayerName()).append(" wins!");
+        new gameDialogue.Message(sb.toString()).show(this, "Game Over");
+    }
+    boolean  gameConfirm(String title, String msg)              {
+        return new gameDialogue.Confirm(msg).show(this, title); }
+    String   gameSelect(String title, String prompt, String[] opts) {
+        return new gameDialogue.Select(prompt, opts).show(this, title); }
+    String   gameInput(String title, String prompt)             {
+        return new gameDialogue.Input(prompt).show(this, title); }
+    void     gameMessage(String title, String msg)              {
+        new gameDialogue.Message(msg).show(this, title); }
+    String[] gameUpgrade()                                      {
+        return new gameDialogue.Upgrade().show(this, "Upgrade Rank"); }
+    // Apply the western parchment look to all Swing dialogs globally
+    void applyTheme() {
+        Color parchment = new Color(210, 190, 160);
+        Color darkBrown = new Color(80, 50, 20);
+        Color btnColor = new Color(160, 120, 70);
+
+        UIManager.put("OptionPane.background", parchment);
+        UIManager.put("OptionPane.messageForeground", darkBrown);
+        UIManager.put("Panel.background", parchment);
+        UIManager.put("Button.background", btnColor);
+        UIManager.put("Button.foreground", Color.WHITE);
+        UIManager.put("ComboBox.background", parchment);
+        UIManager.put("ComboBox.foreground", darkBrown);
+        UIManager.put("List.background", parchment);
+        UIManager.put("List.foreground", darkBrown);
+        UIManager.put("TextField.background", new Color(240, 225, 195));
+        UIManager.put("TextField.foreground", darkBrown);
+        UIManager.put("Label.foreground", darkBrown);
+        UIManager.put("ScrollPane.background", parchment);
+        UIManager.put("Viewport.background", parchment);
+    }
 }
