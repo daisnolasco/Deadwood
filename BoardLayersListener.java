@@ -96,7 +96,7 @@ public class BoardLayersListener extends JFrame implements GameView {
         bPane.add(boardlabel, new Integer(0));
         add(bPane, BorderLayout.CENTER);
         // player stats
-        playerPanel = new PlayerPanelView(controller,this);
+        playerPanel = new PlayerPanelView(controller, this);
         add(playerPanel, BorderLayout.WEST);
 
         // Create the Menu for action buttons on right panel
@@ -111,16 +111,17 @@ public class BoardLayersListener extends JFrame implements GameView {
         btnEnd.setFocusPainted(false);
         btnEnd.setOpaque(true);
         btnEnd.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(120, 30, 30), 2),
-            BorderFactory.createEmptyBorder(5, 12, 5, 12)));
+                BorderFactory.createLineBorder(new Color(120, 30, 30), 2),
+                BorderFactory.createEmptyBorder(5, 12, 5, 12)));
         btnEnd.addActionListener(e -> {
             boolean confirm = gameConfirm("End Game",
-                "End the game now and show final scores?");
-            if (confirm) controller.endAction();
+                    "End the game now and show final scores?");
+            if (confirm)
+                controller.endAction();
         });
         southPanel.add(btnEnd);
         add(southPanel, BorderLayout.SOUTH);
-         setSize(boardW + 340, boardH + 80);
+        setSize(boardW + 340, boardH + 80);
         setLocationRelativeTo(null);
     }
 
@@ -142,7 +143,7 @@ public class BoardLayersListener extends JFrame implements GameView {
         }
 
         public void mouseEntered(MouseEvent e) {
-        
+
         }
 
         public void mouseExited(MouseEvent e) {
@@ -178,16 +179,15 @@ public class BoardLayersListener extends JFrame implements GameView {
                 front.setBounds(x, y, w, h);
                 cardFrontLabels.put(room, front);
                 bPane.add(front, new Integer(2));
-            }else {
+            } else {
                 // Show face-down card back
                 ImageIcon backIcon = new ImageIcon(
-                    backRaw.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
+                        backRaw.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
                 JLabel back = new JLabel(backIcon);
                 back.setBounds(x, y, w, h);
                 cardBackLabels.add(back);
                 bPane.add(back, new Integer(1));
             }
-               
 
         }
         bPane.revalidate();
@@ -213,15 +213,17 @@ public class BoardLayersListener extends JFrame implements GameView {
 
         List<Player> players = controller.getPlayers();
         for (int i = 0; i < players.size(); i++) {
-            Player p     = players.get(i);
+            Player p = players.get(i);
             JLabel token = playerTokens.get(p);
-            if (token == null) continue;
+            if (token == null)
+                continue;
             token.setIcon(getDice(p));
             Room room = p.getCurrentRoom();
             Role role = p.getCurrentRole();
             if (room != null && role != null) {
                 int[] pos = getRolePosition(room, role);
-                token.setBounds(pos[0], pos[1], tokenSize, tokenSize);} /*
+                token.setBounds(pos[0], pos[1], tokenSize, tokenSize);
+            } /*
                * else if (room != null) {
                * // Player is in a room but not on a role — grid inside the room
                * int slot = roomSlot.getOrDefault(room, 0);
@@ -234,7 +236,7 @@ public class BoardLayersListener extends JFrame implements GameView {
                * token.setBounds(x, y, tokenSize, tokenSize);
                * 
                * }
-               */ 
+               */
             else {
                 // Fallback: put near top-left of the board
                 token.setBounds(4 + i * (tokenSize + 2), 4, tokenSize, tokenSize);
@@ -262,38 +264,39 @@ public class BoardLayersListener extends JFrame implements GameView {
         String path = "Images/Dice/" + p.getColor() + p.getRank() + ".png";
         ImageIcon raw = new ImageIcon(path);
 
-            return new ImageIcon(raw.getImage()
+        return new ImageIcon(raw.getImage()
                 .getScaledInstance(tokenSize, tokenSize, Image.SCALE_SMOOTH));
 
-
-     
-      
     }
-
+//set up proccess for getting number of players 
     void runSetupDialogs() {
-       String[] options = { "2","3","4","5","6","7","8" };
+        String[] options = { "2", "3", "4", "5", "6", "7", "8" };
         String choice = new gameDialogue.Select("How many players?", options)
-            .show(this, "Deadwood Setup");
-        if (choice == null) System.exit(0);
+                .show(this, "Deadwood Setup");
+        if (choice == null)
+            System.exit(0);
         numPlayers = Integer.parseInt(choice);
         playerNames.clear();
+        //get names 
         for (int i = 1; i <= numPlayers; i++) {
             String name = null;
             while (name == null || name.trim().isEmpty()) {
                 name = new gameDialogue.Input("Enter name for Player " + i + ":")
-                    .show(this, "Player " + i);
-                if (name == null) System.exit(0);
+                        .show(this, "Player " + i);
+                if (name == null)
+                    System.exit(0);
                 if (name.trim().isEmpty())
                     new gameDialogue.Message("Name cannot be empty.")
-                        .show(this, "Invalid Name");
+                            .show(this, "Invalid Name");
             }
             playerNames.add(name.trim());
         }
+    
         controller.setNumPlayers(numPlayers);
         controller.setupGame(playerNames);
         createPlayerTokens();
         refreshView();
-    
+
     }
 
     // game view interfce - observer
@@ -311,19 +314,20 @@ public class BoardLayersListener extends JFrame implements GameView {
         actionPanel.refreshButtons(); // show/hide buttons for current player
     }
 
-   @Override
+    @Override
     public void showActResult(String message) {
         new gameDialogue.Message(message).show(this, "Action Result");
     }
-
+//text should be moved to game dialogue class
     @Override
     public void offerTakeRole() {
         boolean want = new gameDialogue.Confirm(
                 "You moved to a set with available roles. Take a role now?")
                 .show(this, "Take Role?");
         if (want)
-            actionPanel.showTakeRoleDialog();
+            gameDialogue.TakeRoleDialog.show(this, controller); 
     }
+
     @Override
     public void offerUpgrade() {
         log("Upgrade Availible -> Use the Upgrade button.");
@@ -332,27 +336,39 @@ public class BoardLayersListener extends JFrame implements GameView {
     @Override
     public void showEndGame() {
         List<Player> players = controller.getPlayers();
-        if (players == null || players.isEmpty()) return;
+        if (players == null || players.isEmpty())
+            return;
         Player winner = controller.getBoard().getWinner(players);
         StringBuilder sb = new StringBuilder("Final Scores:\n");
         for (Player p : players)
             sb.append(p == winner ? "* " : "  ")
-              .append(p.getPlayerName()).append(": ").append(p.playerScore()).append("\n");
+                    .append(p.getPlayerName()).append(": ").append(p.playerScore()).append("\n");
         if (winner != null)
             sb.append("\n").append(winner.getPlayerName()).append(" wins!");
         new gameDialogue.Message(sb.toString()).show(this, "Game Over");
     }
-    boolean  gameConfirm(String title, String msg)              {
-        return new gameDialogue.Confirm(msg).show(this, title); }
-    String   gameSelect(String title, String prompt, String[] opts) {
-        return new gameDialogue.Select(prompt, opts).show(this, title); }
-    String   gameInput(String title, String prompt)             {
-        return new gameDialogue.Input(prompt).show(this, title); }
-    void     gameMessage(String title, String msg)              {
-        new gameDialogue.Message(msg).show(this, title); }
-    String[] gameUpgrade()                                      {
-        return new gameDialogue.Upgrade().show(this, "Upgrade Rank"); }
-    // Apply the western parchment look to all Swing dialogs globally
+
+    boolean gameConfirm(String title, String msg) {
+        return new gameDialogue.Confirm(msg).show(this, title);
+    }
+
+    String gameSelect(String title, String prompt, String[] opts) {
+        return new gameDialogue.Select(prompt, opts).show(this, title);
+    }
+
+    String gameInput(String title, String prompt) {
+        return new gameDialogue.Input(prompt).show(this, title);
+    }
+
+    void gameMessage(String title, String msg) {
+        new gameDialogue.Message(msg).show(this, title);
+    }
+
+    String[] gameUpgrade() {
+        return new gameDialogue.Upgrade().show(this, "Upgrade Rank");
+    }
+
+    // deadwood  theme
     void applyTheme() {
         Color parchment = new Color(210, 190, 160);
         Color darkBrown = new Color(80, 50, 20);

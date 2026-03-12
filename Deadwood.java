@@ -2,7 +2,8 @@ import java.util.*;
 
 import javax.swing.SwingUtilities;
 
-//Controller 
+//Updated to be Controller by handling button actions
+//removing user input/output from terminal display methods so only does action s
 public class Deadwood {
     private ArrayList<Player> players = new ArrayList<Player>();
     private Board board;
@@ -23,18 +24,21 @@ public class Deadwood {
     int dollars = 0;
     private GameView view;
     private final CastingOffice castingOffice = new CastingOffice();
-//adding singletton board instance 
+
+    // adding singleton board instance
     public Deadwood() {
         Board.resetInstance();
         board = Board.getInstance();
         action = new Actions(board);
     }
-
+//main entry point of program 
     public static void main(String[] args) {
         Deadwood controller = new Deadwood();
+        //mvc : board (view) uses controller (deadwood)
         BoardLayersListener gui = new BoardLayersListener(controller);
         controller.setView(gui);
         gui.setVisible(true);
+        //inizialize set up 
         SwingUtilities.invokeLater(() -> gui.runSetupDialogs());
     }
 
@@ -45,7 +49,6 @@ public class Deadwood {
     // called by view after num players and names are set
     public void setNumPlayers(int numPlayers) {
         this.totalPlayers = numPlayers;
-
         if (totalPlayers <= 3) {
             totalDays = 3;
             board.setTotalDays(3);
@@ -53,7 +56,6 @@ public class Deadwood {
             totalDays = 4;
             board.setTotalDays(4);
         }
-
         if (totalPlayers == 5) {
             credits = 2;
         } else if (totalPlayers == 6) {
@@ -63,41 +65,43 @@ public class Deadwood {
         }
     }
 
-   public void setupGame(List<String> playerNames) {
+    public void setupGame(List<String> playerNames) {
         players.clear();
-        // Color letters match the dice image filenames (e.g. "b2.png" = blue rank 2)
+        // dice colors saved for player token
         char[] colors = { 'b', 'c', 'g', 'o', 'p', 'r', 'v', 'w', 'y' };
-
         for (int i = 0; i < totalPlayers; i++) {
             String name = playerNames.get(i);
-            if (name == null || name.trim().isEmpty()) name = "Player " + (i + 1);
+            if (name == null || name.trim().isEmpty())
+                name = "Player " + (i + 1);
             Player p = new Player(name.trim(), rank, credits, dollars, board.getTrailers());
             p.setColor(colors[i % colors.length]); // assign unique color per player
             players.add(p);
         }
 
         board.moveToTrailer(players);
-        playerIndex   = 0;
+        playerIndex = 0;
         currentPlayer = players.get(playerIndex);
-        currentRoom   = currentPlayer.getCurrentRoom();
+        currentRoom = currentPlayer.getCurrentRoom();
 
         view.log("Welcome to Deadwood!");
         view.log(currentPlayer.getPlayerName() + "'s turn.");
         view.refreshView();
     }
+
     // helper method to display all players and their locations on the board, used
     // for testing and debugging
-    /*private void displayAllPlayersLocations() {
-        System.out.println("\n--- Player Locations ---");
-        for (Player p : players) {
-            String activeMark = (p == currentPlayer) ? " (active)" : "";
-            String roomName = (p.getCurrentRoom() != null) ? p.getCurrentRoom().getRoomName() : "Unknown";
-            System.out.println("- " + p.getPlayerName() + activeMark + " : " + roomName);
-        }
-        System.out.println("------------------------");
-    }
-*/
-    // main Game loop, loops through each player in list
+    /*
+     * private void displayAllPlayersLocations() {
+     * System.out.println("\n--- Player Locations ---");
+     * for (Player p : players) {
+     * String activeMark = (p == currentPlayer) ? " (active)" : "";
+     * String roomName = (p.getCurrentRoom() != null) ?
+     * p.getCurrentRoom().getRoomName() : "Unknown";
+     * System.out.println("- " + p.getPlayerName() + activeMark + " : " + roomName);
+     * }
+     * System.out.println("------------------------");
+     * }
+     */
     // Player buttons called by view
     public boolean moveAction(String roomName) {
         boolean moved = action.Move(currentPlayer, roomName);
@@ -120,9 +124,9 @@ public class Deadwood {
                 } else {
                     nextTurn();
                 }
-            } 
-                nextTurn();
-            
+            }
+            nextTurn();
+
         } else {
             view.log("Cannot move to " + roomName + ".");
         }
@@ -132,15 +136,17 @@ public class Deadwood {
     public void moveAction(Room targetRoom) {
         moveAction(targetRoom.getRoomName());
     }
- // Used by the upgrade flow so the turn doesn't advance just from moving.
+
+    // Used by the upgrade so turn doesn't advance just from moving.
     public void moveSilentAction(String roomName) {
         boolean moved = action.Move(currentPlayer, roomName);
         if (moved) {
             currentRoom = currentPlayer.getCurrentRoom();
             view.log(currentPlayer.getPlayerName() + " moved to " + currentRoom.getRoomName());
-            view.refreshView(); // update dice token position immediately
+            view.refreshView(); 
         }
     }
+
     public void takeRoleAction(String roleName) {
         action.takeRole(currentPlayer, roleName);
         if (currentPlayer.getCurrentRole() != null) {
@@ -158,7 +164,7 @@ public class Deadwood {
         takeRoleAction(role.getRoleName());
     }
 
- public void actAction() {
+    public void actAction() {
         if (!currentPlayer.isWorking()) {
             view.log("You need a role to act!");
             return;
@@ -169,6 +175,7 @@ public class Deadwood {
         view.refreshView();
         nextTurn();
     }
+
     // Called when player declines to take a role after moving
     public void declineTakeRole() {
         nextTurn();
@@ -221,7 +228,7 @@ public class Deadwood {
         endOfGame();
     }
 
-    public void displayRules() {
+   /* public void displayRules() {
 
         System.out.println("To Play:\n" + //
 
@@ -243,7 +250,7 @@ public class Deadwood {
                 "\n" + //
                 "\"end\" : end game at any time an display score");
     }
-
+*/
     // helpful getters
 
     public Player getCurrentPlayer() {

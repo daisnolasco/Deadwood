@@ -1,10 +1,14 @@
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.*;
 
 public abstract class gameDialogue<T> {
 
+//dialog colors
     static final Color BG = new Color(210, 190, 160);
     static final Color border = new Color(120, 85, 45);
     static final Color green = new Color(80, 140, 80);
@@ -14,7 +18,7 @@ public abstract class gameDialogue<T> {
     static final Font button = new Font("Serif", Font.BOLD, 12);
 
     protected JDialog dlg;
-
+//display styling 
     public T show(JFrame parent, String title) {
         dlg = new JDialog(parent, title, true);
         dlg.setLayout(new BorderLayout(8, 8));
@@ -28,14 +32,11 @@ public abstract class gameDialogue<T> {
         return getResult();
 
     }
-
     protected abstract void buildList();
-
     protected abstract T getResult();
-
     // helpers
     // create buttons
-    protected JButton makeButton(String text, Color bg) {
+    protected static JButton makeButton(String text, Color bg) {
         JButton btn = new JButton(text);
         btn.setFont(button);
         btn.setBackground(bg);
@@ -201,7 +202,7 @@ private String prompt;
             return null;
         }
     }
-
+//dialogue for actions 
     public static class Upgrade extends gameDialogue<String[]> {
         private String[] result = null;
 
@@ -244,5 +245,58 @@ private String prompt;
         protected String[] getResult() {
             return result;
         }
+    }// Shows adjacent rooms and moves player
+    // Add to gameDialogue.java — after Upgrade class
+
+// Shows adjacent rooms and moves player
+public static class MoveDialog {
+    public static void show(JFrame parent, Deadwood controller) {
+        List<Room> neighbors = controller.getCurrentPlayer().getCurrentRoom().getAdjacentRooms();
+        if (neighbors.isEmpty()) {
+            new Message("No adjacent rooms to move to.").show(parent, "Move");
+            return;
+        }
+        String[] names = neighbors.stream()
+            .map(Room::getRoomName).toArray(String[]::new);
+        String choice = new Select("Choose a room:", names).show(parent, "Move");
+        if (choice != null) controller.moveAction(choice);
     }
+}
+
+// Shows available roles and assigns one to player
+public static class TakeRoleDialog {
+    public static void show(JFrame parent, Deadwood controller) {
+        Room room = controller.getCurrentPlayer().getCurrentRoom();
+        List<Role> available = new ArrayList<>();
+        for (Role r : room.getAvailibleRoles())
+            if (r.getRequiredRank() <= controller.getCurrentPlayer().getRank())
+                available.add(r);
+        if (available.isEmpty()) {
+            new Message("No roles available at your rank.").show(parent, "Take Role");
+            return;
+        }
+        String[] labels = available.stream()
+            .map(r -> r.getRoleName() + " (rank " + r.getRequiredRank() + ")")
+            .toArray(String[]::new);
+        String choice = new Select("Choose your role:", labels).show(parent, "Take Role");
+        if (choice != null) controller.takeRoleAction(choice.split(" \\(rank")[0]);
+    }
+}
+
+// Checks office, moves if needed, then upgrades
+public static class UpgradeDialog {
+    public static void show(JFrame parent, Deadwood controller) {
+        if (!controller.getCurrentPlayer().getCurrentRoom()
+                .getRoomName().equalsIgnoreCase("office")) {
+            boolean move = new Confirm(
+                "You must be at the Casting Office to upgrade. Move there now?")
+                .show(parent, "Upgrade Rank");
+            if (!move) return;
+            controller.moveAction("office");
+        }
+        String[] result = new Upgrade().show(parent, "Upgrade Rank");
+        if (result != null) controller.upgradeAction(result[0], result[1]);
+    }
+}
+
 }
