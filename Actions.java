@@ -163,58 +163,58 @@ public class Actions {
     // Success = earn credits (starring) or credits + dollars (extra) ,Failure= earn
     // dollar (extra only).
     // Removes a shot counter if successful — wraps scene if all shots gone.
-    public void act(Player player) {
+     public String act(Player player) {
 
         if (board.isDayOver()) {
-            System.out.println("The day is over. You cannot act now.");
-            return;
+            return "The day is over. You cannot act now.";
         }
 
         if (!validateAct(player)) {
-            System.out.println("You are not Currently working on a role!");
-            return;
+            return "You are not currently working on a role!";
         }
 
         currentRoom = player.getCurrentRoom();
-
         Scene scene = currentRoom.getCurrentScene();
         if (scene == null) {
-            System.out.println("Error: No active scene in the room.");
-            return;
+            return "Error: No active scene in this room.";
         }
 
         int budget = scene.getMovieBudget();
-        int roll = rollDice();
-        int total = dice.addRehearsalBonus(roll, player.getRehearsalTokens());
+        int roll   = rollDice();
+        int total  = dice.addRehearsalBonus(roll, player.getRehearsalTokens());
 
-        System.out.println("Rolled " + roll + " + " + player.getRehearsalTokens() +
-                " rehearsal = " + total + " (budget " + budget + ")");
+        String rollInfo = "Rolled " + roll + " + " + player.getRehearsalTokens()
+                        + " rehearsal = " + total + " (need " + budget + ")";
+        System.out.println(rollInfo);
 
         Role role = player.getCurrentRole();
+        String result;
+
         if (total >= budget) {
             if (role.isStarringRole()) {
                 player.addCredits(2);
-                System.out.println("Act succeeded! Earned 2 credits.");
+                result = "Success! Earned 2 credits.\n" + rollInfo;
             } else {
                 player.addCredits(1);
                 player.addDollars(1);
-                System.out.println("Act succeeded! Earned 1 credit and 1 dollar.");
+                result = "Success! Earned 1 credit and $1.\n" + rollInfo;
             }
-            System.out.println("Remaining Shots: " + currentRoom.getRemainingCounters());
             currentRoom.removeShotCounter();
+            System.out.println("Remaining shots: " + currentRoom.getRemainingCounters());
             if (currentRoom.isSceneComplete()) {
                 wrapScene(currentRoom);
-                System.out.println("Scene is complete! ");
+                result += "\nScene wrapped!";
             }
         } else {
             if (!role.isStarringRole()) {
                 player.addDollars(1);
-                System.out.println("Act failed. Earned 1 dollar.");
+                result = "Failed. Earned $1 for trying.\n" + rollInfo;
             } else {
-                System.out.println("Act failed. No reward.");
+                result = "Failed. No reward.\n" + rollInfo;
             }
         }
 
+        return result;
     }
 
     // reharsal token added on rehearse as long as it not a guarteed win
