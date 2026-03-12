@@ -3,7 +3,7 @@ import java.util.*;
 import javax.swing.SwingUtilities;
 
 //Controller 
-public class Deadwood  {
+public class Deadwood {
     private ArrayList<Player> players = new ArrayList<Player>();
     private Board board;
     private Actions action;
@@ -23,14 +23,17 @@ public class Deadwood  {
     int dollars = 0;
     private GameView view;
     private final CastingOffice castingOffice = new CastingOffice();
-public Deadwood() {
+//adding singletton board instance 
+    public Deadwood() {
         Board.resetInstance();
         board = Board.getInstance();
         action = new Actions(board);
     }
-   public static void main(String[] args) {
+
+    public static void main(String[] args) {
         Deadwood controller = new Deadwood();
         BoardLayersListener gui = new BoardLayersListener(controller);
+        controller.setView(gui);
         gui.setVisible(true);
         SwingUtilities.invokeLater(() -> gui.runSetupDialogs());
     }
@@ -60,40 +63,31 @@ public Deadwood() {
         }
     }
 
-    public void setupGame(List<String> playerNames) {
+   public void setupGame(List<String> playerNames) {
         players.clear();
-char[] colors = {'b', 'c','g','o','p','r','v','w','y'};
-       
+        // Color letters match the dice image filenames (e.g. "b2.png" = blue rank 2)
+        char[] colors = { 'b', 'c', 'g', 'o', 'p', 'r', 'v', 'w', 'y' };
+
         for (int i = 0; i < totalPlayers; i++) {
             String name = playerNames.get(i);
-            if (name == null || name.trim().isEmpty()) {
-                name = "Player " + (i + 1);
-            }
-
+            if (name == null || name.trim().isEmpty()) name = "Player " + (i + 1);
             Player p = new Player(name.trim(), rank, credits, dollars, board.getTrailers());
-            p.setColor(colors[i]);
-            p.setCurrentRoom(board.getTrailers());
-
+            p.setColor(colors[i % colors.length]); // assign unique color per player
             players.add(p);
         }
 
         board.moveToTrailer(players);
-
-        playerIndex = 0;
+        playerIndex   = 0;
         currentPlayer = players.get(playerIndex);
-        currentRoom = currentPlayer.getCurrentRoom();
+        currentRoom   = currentPlayer.getCurrentRoom();
 
-        if (view != null) {
-            view.log("Welcome to Deadwood!");
-            view.log(currentPlayer.getPlayerName() + "'s turn");
-            view.refreshView();
-        }
-    
+        view.log("Welcome to Deadwood!");
+        view.log(currentPlayer.getPlayerName() + "'s turn.");
+        view.refreshView();
     }
-
     // helper method to display all players and their locations on the board, used
     // for testing and debugging
-    private void displayAllPlayersLocations() {
+    /*private void displayAllPlayersLocations() {
         System.out.println("\n--- Player Locations ---");
         for (Player p : players) {
             String activeMark = (p == currentPlayer) ? " (active)" : "";
@@ -102,17 +96,15 @@ char[] colors = {'b', 'c','g','o','p','r','v','w','y'};
         }
         System.out.println("------------------------");
     }
+*/
     // main Game loop, loops through each player in list
-//Player buttons called by view 
-    public void moveAction(Room targetRoom) {
-        boolean moved = action.Move(currentPlayer, targetRoom.getRoomName());
+    // Player buttons called by view
+    public boolean moveAction(String roomName) {
+        boolean moved = action.Move(currentPlayer, roomName);
         if (moved) {
             currentRoom = currentPlayer.getCurrentRoom();
-            view.log(currentPlayer.getPlayerName()
-                    + " moved to " + currentRoom.getRoomName());
+            view.log(currentPlayer.getPlayerName() + " moved to " + currentRoom.getRoomName());
             view.refreshView();
-
-            // Offer take role if new room has active scene with roles in range
             if (currentRoom.isSet() && currentRoom.hasActiveScene()
                     && !currentRoom.getAvailibleRoles().isEmpty()) {
                 boolean hasAvailableRole = false;
@@ -124,54 +116,83 @@ char[] colors = {'b', 'c','g','o','p','r','v','w','y'};
                 }
                 if (hasAvailableRole) {
                     view.offerTakeRole();
+                    return moved;
                 } else {
                     nextTurn();
                 }
-            } else {
+            } 
                 nextTurn();
-            }
+            
         } else {
-            view.log("Cannot move to " + targetRoom.getRoomName() + ".");
+            view.log("Cannot move to " + roomName + ".");
         }
+        return moved;
     }
 
-    public void TakeRoleAction(Role role) {
-        if (role == null)
-            return;
-        action.takeRole(currentPlayer, role.getRoleName());
+    public void moveAction(Room targetRoom) {
+        moveAction(targetRoom.getRoomName());
+    }
+ // Used by the upgrade flow so the turn doesn't advance just from moving.
+    public void moveSilentAction(String roomName) {
+        boolean moved = action.Move(currentPlayer, roomName);
+        if (moved) {
+            currentRoom = currentPlayer.getCurrentRoom();
+            view.log(currentPlayer.getPlayerName() + " moved to " + currentRoom.getRoomName());
+            view.refreshView(); // update dice token position immediately
+        }
+    }
+    public void takeRoleAction(String roleName) {
+        action.takeRole(currentPlayer, roleName);
         if (currentPlayer.getCurrentRole() != null) {
-            view.log(currentPlayer.getPlayerName()
-                    + " took role: " + role.getRoleName());
+            view.log(currentPlayer.getPlayerName() + " took role: " + roleName);
             view.refreshView();
             nextTurn();
         } else {
-            view.log("Could not take role: " + role.getRoleName());
+            view.log("Could not take role: " + roleName);
         }
     }
 
-    public void actAction() {
+    public void takeRoleAction(Role role) {
+        if (role == null)
+            return;
+        takeRoleAction(role.getRoleName());
+    }
+
+ public void actAction() {
         if (!currentPlayer.isWorking()) {
             view.log("You need a role to act!");
             return;
         }
-        action.act(currentPlayer);
+        String result = action.act(currentPlayer); // act() returns a result string
         view.log(currentPlayer.getPlayerName() + " acted.");
+        view.showActResult(result); // popup showing success/fail details
         view.refreshView();
         nextTurn();
     }
+    // Called when player declines to take a role after moving
+    public void declineTakeRole() {
+        nextTurn();
+    }
 
-    public void RehearseAction() {
+    public void rehearseAction() {
         if (!currentPlayer.isWorking()) {
             view.log("You need a role to rehearse!");
             return;
         }
         if (!action.validateRehearse(currentPlayer)) {
-            view.log("Guaranteed success must Act!");
+            view.log("Guaranteed success — must Act!");
             return;
         }
         action.Rehearse(currentPlayer);
         view.log(currentPlayer.getPlayerName() + " rehearsed. Tokens: "
                 + currentPlayer.getRehearsalTokens());
+        view.refreshView();
+        nextTurn();
+    }
+
+    public void upgradeAction(String rank, String paymentType) {
+        action.upgradeRank(currentPlayer, rank, paymentType);
+        view.log(currentPlayer.getPlayerName() + " upgraded to rank " + rank + ".");
         view.refreshView();
         nextTurn();
     }
@@ -184,7 +205,6 @@ char[] colors = {'b', 'c','g','o','p','r','v','w','y'};
     public void quitAction() {
         view.log(currentPlayer.getPlayerName() + " has quit.");
         board.removePlayer(players, playerIndex);
-
         if (players.isEmpty()) {
             endOfGame();
             return;
@@ -196,8 +216,11 @@ char[] colors = {'b', 'c','g','o','p','r','v','w','y'};
         currentRoom = currentPlayer.getCurrentRoom();
         view.refreshView();
     }
-public void endAction() { 
-    endOfGame(); }
+
+    public void endAction() {
+        endOfGame();
+    }
+
     public void displayRules() {
 
         System.out.println("To Play:\n" + //
@@ -246,7 +269,6 @@ public void endAction() {
 
         view.refreshView();
         view.log(currentPlayer.getPlayerName() + "'s turn");
-
     }
 
     public Board getBoard() {
@@ -272,15 +294,16 @@ public void endAction() {
     public void endOfDay() {
         // checks if day is over based on remaining scenes on board
         // current day is incremented and board sets up for new day
-        System.out.println("End of day" + board.getDayCount());
+        System.out.println("End of day " + board.getDayCount());
         board.setupNewday(players);
         playerIndex = 0;
         if (board.isGameOver()) {
             endOfGame();
+            return;
         }
         currentPlayer = players.get(playerIndex);
         currentRoom = currentPlayer.getCurrentRoom();
-        view.log("Day " + board.getDayCount() + " begins! ");
+        view.log("Day " + board.getDayCount() + " begins!");
         view.refreshView();
 
     }
@@ -290,7 +313,5 @@ public void endAction() {
         view.showEndGame();
         board.displayScore(players);
 
-    }}
-
-  
-
+    }
+}
