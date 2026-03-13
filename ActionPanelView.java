@@ -17,6 +17,7 @@ public class ActionPanelView extends JPanel {
     JButton upgradeButton;
     JButton skipButton;
     JButton quitButton;
+    private JLabel dayLabel;
     // Log box
     JTextArea logArea;
     // right view colors
@@ -36,6 +37,15 @@ public class ActionPanelView extends JPanel {
         setBackground(tan);
         setPreferredSize(new Dimension(170, 100));
         setBorder(BorderFactory.createEmptyBorder(10, 8, 10, 8));
+        // Day display
+        dayLabel = new JLabel("Day 1 / 4", SwingConstants.CENTER);
+        dayLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+        dayLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        dayLabel.setForeground(new Color(80, 50, 20)); // dark brown
+        add(dayLabel);
+        add(Box.createVerticalStrut(4));
+
+        // Menu title
         JLabel title = new JLabel("MENU", SwingConstants.CENTER);
         title.setFont(new Font("SansSerif", Font.BOLD, 14));
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -107,6 +117,7 @@ public class ActionPanelView extends JPanel {
     public void refreshButtons() {
         if (controller.getPlayers().isEmpty())
             return;
+        updateDayDisplay();
         Player player = controller.getCurrentPlayer();
         Room room = player.getCurrentRoom();
         boolean working = player.isWorking();
@@ -128,6 +139,12 @@ public class ActionPanelView extends JPanel {
         upgradeButton.setVisible(!working && room.getRoomName().equalsIgnoreCase("office"));
         skipButton.setVisible(true);
         quitButton.setVisible(true);
+    }
+
+    private void updateDayDisplay() {
+        int day = controller.getBoard().getDayCount();
+        int total = controller.getTotalDays();
+        dayLabel.setText("Day " + day + " / " + total);
     }
 
     // button style for action buttons
