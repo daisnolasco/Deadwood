@@ -52,22 +52,21 @@ public class CastingOffice {
         return true;
     }
 
-    // Upgrade player to rank
-    public void upgradePlayer(Player player, int newRank, PaymentType payType) {
-        if (canUpgrade(player, newRank, payType)) {
-            int cost = 0;
-            int arrayIndex = newRank - 2; 
-
-            if (payType == PaymentType.DOLLARS) {
-                cost = upgradeRankDollars[arrayIndex];
-                player.setDollars(player.getDollars() - cost);
-            } else if (payType == PaymentType.CREDITS) {
-                cost = upgradeRankCredits[arrayIndex];
-                player.setCredits(player.getCredits() - cost);
-            }
-            player.setRank(newRank);
-            System.out.println("Player upgraded to rank " + newRank + " using " + payType);
+    // Upgrade player to rank , returns true if successful
+    public boolean upgradePlayer(Player player, int newRank, PaymentType payType) {
+        if (!canUpgrade(player, newRank, payType)) return false;
+        int cost = 0;
+        int arrayIndex = newRank - 2;
+        if (payType == PaymentType.DOLLARS) {
+            cost = upgradeRankDollars[arrayIndex];
+            player.setDollars(player.getDollars() - cost);
+        } else if (payType == PaymentType.CREDITS) {
+            cost = upgradeRankCredits[arrayIndex];
+            player.setCredits(player.getCredits() - cost);
         }
+        player.setRank(newRank);
+        System.out.println("Player upgraded to rank " + newRank + " using " + payType);
+        return true;
     }
 
     // Display upgrade cost
