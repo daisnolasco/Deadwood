@@ -1,5 +1,6 @@
 import java.util.*;
 
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 //Updated to be Controller by handling button actions
@@ -31,14 +32,15 @@ public class Deadwood {
         board = Board.getInstance();
         action = new Actions(board);
     }
-//main entry point of program 
+
+    // main entry point of program
     public static void main(String[] args) {
         Deadwood controller = new Deadwood();
-        //mvc : board (view) uses controller (deadwood)
+        // mvc : board (view) uses controller (deadwood)
         BoardLayersListener gui = new BoardLayersListener(controller);
         controller.setView(gui);
         gui.setVisible(true);
-        //inizialize set up 
+        // inizialize set up
         SwingUtilities.invokeLater(() -> gui.runSetupDialogs());
     }
 
@@ -105,36 +107,60 @@ public class Deadwood {
     // Player buttons called by view
     public boolean moveAction(String roomName) {
         boolean moved = action.Move(currentPlayer, roomName);
-        if (moved) {
-            currentRoom = currentPlayer.getCurrentRoom();
-            view.log(currentPlayer.getPlayerName() + " moved to " + currentRoom.getRoomName());
-            view.refreshView();
-            if (currentRoom.isSet() && currentRoom.hasActiveScene()
-                    && !currentRoom.getAvailibleRoles().isEmpty()) {
-                boolean hasAvailableRole = false;
-                for (Role r : currentRoom.getAvailibleRoles()) {
-                    if (r.getRequiredRank() <= currentPlayer.getRank()) {
-                        hasAvailableRole = true;
-                        break;
-                    }
-                }
-                if (hasAvailableRole) {
-                    view.offerTakeRole();
-                    return moved;
-                } else {
-                    nextTurn();
+
+        if (!moved) {
+            view.log("Cannot move to " + roomName + ".");
+            return false;
+        }
+
+        currentRoom = currentPlayer.getCurrentRoom();
+        view.log(currentPlayer.getPlayerName() + " moved to " + currentRoom.getRoomName());
+        view.refreshView();
+
+        if (currentRoom.isSet() && currentRoom.hasActiveScene()) {
+            boolean hasAvailableRole = false;
+            for (Role r : currentRoom.getAvailibleRoles()) {
+                if (r.getRequiredRank() <= currentPlayer.getRank()) {
+                    hasAvailableRole = true;
+                    break;
                 }
             }
-            nextTurn();
 
+            if (hasAvailableRole) {
+                view.offerTakeRole();
+                return true;
+            } else {
+                new gameDialogue.Notice("No Roles", "No available roles in this room.")
+                        .show((JFrame) view, "No Roles");
+            }
         } else {
-            view.log("Cannot move to " + roomName + ".");
+            new gameDialogue.Notice("No Roles", "No available roles in this room.")
+                    .show((JFrame) view, "No Roles");
         }
-        return moved;
+
+        nextTurn();
+        return true;
     }
 
     public void moveAction(Room targetRoom) {
         moveAction(targetRoom.getRoomName());
+    }
+
+    // Entry point for upgrade button — checks office, routes view accordingly
+    public void startUpgrade() {
+        if (!currentPlayer.getCurrentRoom().getRoomName().equalsIgnoreCase("office")) {
+            view.offerMoveToOffice();
+        } else {
+            view.showUpgradeForm();
+        }
+    }
+
+    // Moves player directly to office (no adjacency check) for upgrade flow
+    public void moveToOfficeAction() {
+        board.moveToOffice(currentPlayer);
+        currentRoom = currentPlayer.getCurrentRoom();
+        view.log(currentPlayer.getPlayerName() + " went to the Casting Office.");
+        view.refreshView();
     }
 
     // Used by the upgrade so turn doesn't advance just from moving.
@@ -143,7 +169,7 @@ public class Deadwood {
         if (moved) {
             currentRoom = currentPlayer.getCurrentRoom();
             view.log(currentPlayer.getPlayerName() + " moved to " + currentRoom.getRoomName());
-            view.refreshView(); 
+            view.refreshView();
         }
     }
 
@@ -169,9 +195,24 @@ public class Deadwood {
             view.log("You need a role to act!");
             return;
         }
-        String result = action.act(currentPlayer); // act() returns a result string
+
+        String result = action.act(currentPlayer);
+        boolean success = result.startsWith("Success!");
+
         view.log(currentPlayer.getPlayerName() + " acted.");
-        view.showActResult(result); // popup showing success/fail details
+        view.showActResult(success, result);
+
+        if (result.contains("Scene wrapped!")) {
+            String[] parts = result.split("Scene wrapped!", 2);
+            String wrapMessage = "The scene has wrapped.";
+            if (parts.length > 1 && !parts[1].trim().isEmpty()) {
+                wrapMessage = parts[1].trim();
+            }
+
+            new gameDialogue.SceneWrapDialog(wrapMessage)
+                    .show((JFrame) view, "Scene Wrapped");
+        }
+
         view.refreshView();
         nextTurn();
     }
@@ -187,7 +228,7 @@ public class Deadwood {
             return;
         }
         if (!action.validateRehearse(currentPlayer)) {
-            view.log("Guaranteed success — must Act!");
+            view.offerGuaranteedAct();
             return;
         }
         action.Rehearse(currentPlayer);
@@ -198,10 +239,15 @@ public class Deadwood {
     }
 
     public void upgradeAction(String rank, String paymentType) {
-        action.upgradeRank(currentPlayer, rank, paymentType);
-        view.log(currentPlayer.getPlayerName() + " upgraded to rank " + rank + ".");
-        view.refreshView();
-        nextTurn();
+        boolean upgraded = action.upgradeRank(currentPlayer, rank, paymentType);
+        if (upgraded) {
+            view.log(currentPlayer.getPlayerName() + " upgraded to rank " + rank + "!");
+            view.refreshView();
+            nextTurn();
+        } else {
+            view.log("Upgrade failed — check rank and funds.");
+            view.showUpgradeForm(); // let player try again
+        }
     }
 
     public void skipAction() {
@@ -210,47 +256,55 @@ public class Deadwood {
     }
 
     public void quitAction() {
-        view.log(currentPlayer.getPlayerName() + " has quit.");
-        board.removePlayer(players, playerIndex);
-        if (players.isEmpty()) {
-            endOfGame();
-            return;
-        }
-        if (playerIndex >= players.size()) {
-            playerIndex = 0;
-        }
-        currentPlayer = players.get(playerIndex);
-        currentRoom = currentPlayer.getCurrentRoom();
-        view.refreshView();
+    view.log(currentPlayer.getPlayerName() + " has quit.");
+    board.removePlayer(players, playerIndex);
+
+    if (players.size() <= 1) {
+        endOfGame();
+        return;
     }
+
+    if (playerIndex >= players.size()) {
+        playerIndex = 0;
+    }
+
+    currentPlayer = players.get(playerIndex);
+    currentRoom = currentPlayer.getCurrentRoom();
+    view.refreshView();
+    view.log(currentPlayer.getPlayerName() + "'s turn");
+}
 
     public void endAction() {
         endOfGame();
     }
 
-   /* public void displayRules() {
-
-        System.out.println("To Play:\n" + //
-
-                "1. Players start at trailer and on turn can only move from trailer or skip turn \n" + //
-                "2. A player is given option to move , take role , upgrade or skip turn when they dont have a role\n" + //
-                "3. Player can only  act rehearse or skip turn when they are working a role\n" + //
-                "4. On Turn ,you can either enter a Action Name or Number for \n" + //
-                "5. game loops through each player and only ends when all days are complete , if all plauyers quit or player enters in \n"
-                + //
-                "\n" + //
-                "User Can Enter these commands on turn:\n" + //
-                "\"who\": Active player info\n" + //
-                "\n" + //
-                "\"board\": display board and player info for all players\n" + //
-                "\n" + //
-                "\"skip\" : to skip a turn\n" + //
-                "\n" + //
-                "\"quit\" : to quit playing and remove player\n" + //
-                "\n" + //
-                "\"end\" : end game at any time an display score");
-    }
-*/
+    /*
+     * public void displayRules() {
+     * 
+     * System.out.println("To Play:\n" + //
+     * 
+     * "1. Players start at trailer and on turn can only move from trailer or skip turn \n"
+     * + //
+     * "2. A player is given option to move , take role , upgrade or skip turn when they dont have a role\n"
+     * + //
+     * "3. Player can only  act rehearse or skip turn when they are working a role\n"
+     * + //
+     * "4. On Turn ,you can either enter a Action Name or Number for \n" + //
+     * "5. game loops through each player and only ends when all days are complete , if all plauyers quit or player enters in \n"
+     * + //
+     * "\n" + //
+     * "User Can Enter these commands on turn:\n" + //
+     * "\"who\": Active player info\n" + //
+     * "\n" + //
+     * "\"board\": display board and player info for all players\n" + //
+     * "\n" + //
+     * "\"skip\" : to skip a turn\n" + //
+     * "\n" + //
+     * "\"quit\" : to quit playing and remove player\n" + //
+     * "\n" + //
+     * "\"end\" : end game at any time an display score");
+     * }
+     */
     // helpful getters
 
     public Player getCurrentPlayer() {

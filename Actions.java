@@ -144,6 +144,7 @@ public class Actions {
 
         }
         return true;
+        
     }
 
     public boolean validateCanUpgrade(Player player, int newRank) {
@@ -201,10 +202,13 @@ public class Actions {
             }
             currentRoom.removeShotCounter();
             System.out.println("Remaining shots: " + currentRoom.getRemainingCounters());
-            if (currentRoom.isSceneComplete()) {
-                wrapScene(currentRoom);
-                result += "\nScene wrapped!";
-            }
+          if (currentRoom.isSceneComplete()) {
+    String wrapInfo = wrapScene(currentRoom);
+    result += "\nScene wrapped!";
+    if (wrapInfo != null && !wrapInfo.isEmpty()) {
+        result += "\n" + wrapInfo;
+    }
+}
         } else {
             if (!role.isStarringRole()) {
                 player.addDollars(1);
@@ -244,79 +248,79 @@ public class Actions {
     //
     // CastingOffice validates funds and applies the upgrade if playe is in office,
     // rank must be valid number, payment is d/c.
-    public void upgradeRank(Player player, String newRank, String paymentType) {
-        // update player rank
-
+    // Returns true if upgrade succeeded, false if validation failed
+    public boolean upgradeRank(Player player, String newRank, String paymentType) {
         if (!player.getCurrentRoom().getRoomName().equalsIgnoreCase("office")) {
             System.out.println("You must be in casting office to upgrade");
-            return;
+            return false;
         }
-
         if (!newRank.matches("\\d+")) {
-
-            System.out.println("Please Choose a valid rank to upgrade to");
-            return;
-
+            System.out.println("Please choose a valid rank to upgrade to");
+            return false;
         }
         int rankNum = Integer.parseInt(newRank);
-
         if (paymentType.equalsIgnoreCase("d") || paymentType.equalsIgnoreCase("dollar")
                 || paymentType.equalsIgnoreCase("dollars")) {
-            castingOffice.upgradePlayer(player, rankNum, CastingOffice.PaymentType.DOLLARS);
-        } else if ((paymentType.equalsIgnoreCase("c") || paymentType.equalsIgnoreCase("credit")
-                || paymentType.equalsIgnoreCase("credits"))) {
-            castingOffice.upgradePlayer(player, rankNum, CastingOffice.PaymentType.CREDITS);
-
-        } else {
-            System.out.println("Enter Rank and Payment type (d| dollars) or (c| credits) ");
+            return castingOffice.upgradePlayer(player, rankNum, CastingOffice.PaymentType.DOLLARS);
+        } else if (paymentType.equalsIgnoreCase("c") || paymentType.equalsIgnoreCase("credit")
+                || paymentType.equalsIgnoreCase("credits")) {
+            return castingOffice.upgradePlayer(player, rankNum, CastingOffice.PaymentType.CREDITS);
         }
-
+        return false;
     }
 
-    public void wrapScene(Room room) {
-        System.out.println("Scene in " + room.getRoomName() + " is a wrap");
-        Scene scene = room.getCurrentScene();
-        if (scene == null)
-            return;
-        payOut(room, scene);
-        board.removeScene(room); // this clears the room and decrements activeScenes
+  public String wrapScene(Room room) {
+    System.out.println("Scene in " + room.getRoomName() + " is a wrap");
+    Scene scene = room.getCurrentScene();
+    if (scene == null) {
+        return "";
+    }
+    String payoutInfo = payOut(room, scene);
+    board.removeScene(room);
+    return payoutInfo;
+}
+
+   public String payOut(Room room, Scene scene) {
+    StringBuilder sb = new StringBuilder();
+
+    int budget = scene.getMovieBudget();
+    int[] bonusDice = rollBonusDice(budget);
+    List<Role> starringRoles = scene.getStarRoles();
+    boolean onCard = false;
+
+    for (Role r : starringRoles) {
+        if (r.getAssignedPlayer() != null) {
+            onCard = true;
+            break;
+        }
     }
 
-    public void payOut(Room room, Scene scene) {
-        // pay players bonus based on bonus dice and player role
-        int budget = scene.getMovieBudget();
-        int[] bonusDice = rollBonusDice(budget);
-        List<Role> starringRoles = scene.getStarRoles();
-        boolean onCard = false;
-        for (Role r : starringRoles) {
-            if (r.getAssignedPlayer() != null) {
-                onCard = true;
-                break;
-            }
-        }
-
-        if (!starringRoles.isEmpty() && onCard) {
-            int numRoles = starringRoles.size();
-            for (int i = 0; i < budget; i++) {
-                Role role = starringRoles.get(i % numRoles);
-                Player p = role.getAssignedPlayer();
-                if (p != null) {
-                    int bonus = bonusDice[i];
-                    p.addDollars(bonus);
-                    System.out.println(p.getPlayerName()
-                            + " (star role) gets $" + bonus);
-                }
-            }
-        }
-        for (Role r : room.getExtraRole()) {
-            Player p = r.getAssignedPlayer();
+    if (!starringRoles.isEmpty() && onCard) {
+        int numRoles = starringRoles.size();
+        for (int i = 0; i < budget; i++) {
+            Role role = starringRoles.get(i % numRoles);
+            Player p = role.getAssignedPlayer();
             if (p != null) {
-                p.addDollars(r.getRequiredRank());
-                System.out.println(p.getPlayerName() + " (Extra role) gets $" + r.getRequiredRank());
-
+                int bonus = bonusDice[i];
+                p.addDollars(bonus);
+                String msg = p.getPlayerName() + " (star role) gets $" + bonus;
+                System.out.println(msg);
+                sb.append(msg).append("\n");
             }
         }
-
     }
+
+    for (Role r : room.getExtraRole()) {
+        Player p = r.getAssignedPlayer();
+        if (p != null) {
+            p.addDollars(r.getRequiredRank());
+            String msg = p.getPlayerName() + " (extra role) gets $" + r.getRequiredRank();
+            System.out.println(msg);
+            sb.append(msg).append("\n");
+        }
+    }
+
+    return sb.toString().trim();
+}
 
 }

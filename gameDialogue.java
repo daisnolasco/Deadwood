@@ -114,6 +114,7 @@ public abstract class gameDialogue<T> {
                     BorderFactory.createMatteBorder(0, 0, 2, 0, border),
                     BorderFactory.createEmptyBorder(10, 12, 10, 12)));
             dlg.add(lbl, BorderLayout.NORTH);
+      
             JList<String> list = new JList<>(options);
             list.setFont(body);
             list.setBackground(new Color(235, 215, 185));
@@ -172,9 +173,9 @@ private String prompt;
         dlg.add(mid, BorderLayout.CENTER);
         JButton ok = makeButton("OK", green);
         // Runnable so both button and Enter key do the same thing
-        Runnable confirm = () -> { result = field.getText().trim(); dlg.dispose(); }; // ← was missing result =
+        Runnable confirm = () -> { result = field.getText().trim(); dlg.dispose(); }; 
         ok.addActionListener(e    -> confirm.run());
-        field.addActionListener(e -> confirm.run()); // ← was commented out
+        field.addActionListener(e -> confirm.run()); 
         dlg.add(makeButtonBar(ok), BorderLayout.SOUTH);
     }
     protected String getResult() { return result; }
@@ -245,8 +246,83 @@ private String prompt;
         protected String[] getResult() {
             return result;
         }
-    }// Shows adjacent rooms and moves player
-    // Add to gameDialogue.java — after Upgrade class
+    }
+
+// Shows act outcome 
+public static class ActResult extends gameDialogue<Void> {
+    private final boolean success;
+    private final String message;
+
+    public ActResult(boolean success, String message) {
+        this.success = success;
+        this.message = message;
+    }
+
+    @Override
+    protected void buildList() {
+
+        Color headerColor = success ? green : rust;
+        String headerText = success ? "Success!" : "Failed";
+
+        JLabel header = new JLabel(headerText, SwingConstants.CENTER);
+        header.setFont(titleT);
+        header.setForeground(headerColor);
+        header.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        dlg.add(header, BorderLayout.NORTH);
+
+        // Extract reward only
+        String reward = "";
+
+        if (message.contains("credit") || message.contains("$")) {
+
+            String[] lines = message.split("\n");
+
+            for (String line : lines) {
+                if (line.contains("Earned") || line.contains("$")) {
+                    reward = line;
+                    break;
+                }
+            }
+        }
+
+        if (!reward.isEmpty()) {
+
+            JLabel rewardLbl = new JLabel(
+                "<html><center>" + reward + "</center></html>",
+                SwingConstants.CENTER);
+
+            rewardLbl.setFont(body);
+            rewardLbl.setForeground(border);
+            rewardLbl.setBorder(BorderFactory.createEmptyBorder(6, 20, 6, 20));
+
+            dlg.add(rewardLbl, BorderLayout.CENTER);
+        }
+
+        JButton ok = makeButton("OK", headerColor);
+        ok.addActionListener(e -> dlg.dispose());
+
+        dlg.add(makeButtonBar(ok), BorderLayout.SOUTH);
+    }
+
+    @Override
+    protected Void getResult() {
+        return null;
+    }
+}
+
+    
+
+// Prompts player to act when guarantee success
+public static class GuaranteedActDialog {
+    public static void show(JFrame parent, Deadwood controller) {
+        boolean doAct = new Confirm("You are guaranteed to succeed! Act now?")
+            .show(parent, "Guaranteed Success");
+        if (doAct)
+            controller.actAction();
+        else
+            controller.declineTakeRole();
+    }
+}
 
 // Shows adjacent rooms and moves player
 public static class MoveDialog {
@@ -283,15 +359,81 @@ public static class TakeRoleDialog {
     }
 }
 
-// Checks office, moves if needed, then upgrades
+// Pure upgrade form display — logic handled by Deadwood/Actions/CastingOffice
 public static class UpgradeDialog {
     public static void show(JFrame parent, Deadwood controller) {
-        if (!controller.getCurrentPlayer().getCurrentRoom().getRoomName().equalsIgnoreCase("office")) {
-            new Message("You must be in the Casting Office to upgrade.").show(parent, "Cannot Upgrade");
-            return;
-        }
         String[] result = new Upgrade().show(parent, "Upgrade Rank");
         if (result != null) controller.upgradeAction(result[0], result[1]);
+    }
+}
+public static class SceneWrapDialog extends gameDialogue<Void> {
+    private final String message;
+
+    public SceneWrapDialog(String message) {
+        this.message = message;
+    }
+
+    @Override
+    protected void buildList() {
+        JLabel title = new JLabel("Scene Wrapped!", SwingConstants.CENTER);
+        title.setFont(titleT);
+        title.setForeground(green);
+      
+
+        JLabel msg = new JLabel(
+                "<html><center>" + message.replace("\n", "<br>") + "</center></html>",
+                SwingConstants.CENTER);
+        msg.setFont(body);
+        msg.setForeground(border);
+        msg.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+        dlg.add(msg, BorderLayout.CENTER);
+
+        JButton ok = makeButton("OK", green);
+        ok.addActionListener(e -> dlg.dispose());
+        dlg.add(makeButtonBar(ok), BorderLayout.SOUTH);
+    }
+
+    @Override
+    protected Void getResult() {
+        return null;
+    }
+}
+
+public static class Notice extends gameDialogue<Void> {
+    private final String titleText;
+    private final String message;
+
+    public Notice(String titleText, String message) {
+        this.titleText = titleText;
+        this.message = message;
+    }
+
+    @Override
+    protected void buildList() {
+        JLabel title = new JLabel(titleText, SwingConstants.CENTER);
+        title.setFont(titleT);
+        title.setForeground(border);
+        title.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 2, 0, border),
+                BorderFactory.createEmptyBorder(10, 12, 10, 12)));
+        dlg.add(title, BorderLayout.NORTH);
+
+        JLabel msg = new JLabel(
+                "<html><center>" + message.replace("\n", "<br>") + "</center></html>",
+                SwingConstants.CENTER);
+        msg.setFont(body);
+        msg.setForeground(border);
+        msg.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+        dlg.add(msg, BorderLayout.CENTER);
+
+        JButton ok = makeButton("OK", border);
+        ok.addActionListener(e -> dlg.dispose());
+        dlg.add(makeButtonBar(ok), BorderLayout.SOUTH);
+    }
+
+    @Override
+    protected Void getResult() {
+        return null;
     }
 }
 

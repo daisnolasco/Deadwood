@@ -29,11 +29,12 @@ public class PlayerPanelView extends JPanel {
         JPanel card = new JPanel();
             card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
             card.setBackground(tan);
-            card.setMaximumSize(new Dimension(160, 220));
+            card.setMaximumSize(new Dimension(160, 200));
             card.setAlignmentX(Component.LEFT_ALIGNMENT);
             int thickness = isActive ? 3 : 1;
+            Color borderColor = isActive ? green : brown;
             card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(green, thickness),
+                BorderFactory.createLineBorder(borderColor, thickness),
                 BorderFactory.createEmptyBorder(4, 6, 4, 6)));
 
             JPanel nameRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
@@ -43,7 +44,7 @@ public class PlayerPanelView extends JPanel {
             JLabel diceLabel = new JLabel(parent.getDice(p));
             nameRow.add(diceLabel);
             // Name with active marker
-            String nameText = (isActive ? "Active " : "  ") + p.getPlayerName();
+            String nameText = (isActive ? "Active: " : "  ") + p.getPlayerName();
             JLabel nameLabel = new JLabel(nameText);
             nameLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
             nameLabel.setForeground(darkText);
@@ -60,7 +61,7 @@ public class PlayerPanelView extends JPanel {
             info.setAlignmentX(Component.LEFT_ALIGNMENT);
             card.add(info);
             add(card);
-            add(Box.createVerticalStrut(6));
+            add(Box.createVerticalStrut(4));
         }
 
 

@@ -82,6 +82,7 @@ public class BoardLayersListener extends JFrame implements GameView {
         title.setBackground(Color.WHITE);
         title.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
         add(title, BorderLayout.NORTH);
+        
 
         // Create the JLayeredPane to hold the display, cards, dice and buttons
         bPane = new JLayeredPane();
@@ -207,7 +208,7 @@ public class BoardLayersListener extends JFrame implements GameView {
                 JLabel shotLabel = new JLabel(shotIcon);
                 shotLabel.setBounds((int)(pos[0] * scale), (int)(pos[1] * scale), pos[2], pos[3]);
                 markers.add(shotLabel);
-                bPane.add(shotLabel, new Integer(3));
+                bPane.add(shotLabel, new Integer(4));
             }
             shotMarkers.put(room, markers);
         }
@@ -255,7 +256,7 @@ public class BoardLayersListener extends JFrame implements GameView {
                 int slot = roomSlot.getOrDefault(room, 0);
                 roomSlot.put(room, slot + 1);
 
-                //grid parameters: 4 columns, small margin
+                //grid parameters
                 int cols = 4;
                 int margin = 2;
                 int col = slot % cols;
@@ -267,7 +268,7 @@ public class BoardLayersListener extends JFrame implements GameView {
                 int roomH = (int) (room.getH() * scale);
                 int x = roomX + margin + col * (tokenSize + margin);
                 int y = roomY + margin + row * (tokenSize + margin);
-                
+                token.setBounds(x, y, tokenSize, tokenSize);
             }
         }
         bPane.revalidate();
@@ -291,7 +292,6 @@ public class BoardLayersListener extends JFrame implements GameView {
     ImageIcon getDice(Player p) {
         String path = "Images/Dice/" + p.getColor() + p.getRank() + ".png";
         ImageIcon raw = new ImageIcon(path);
-
         return new ImageIcon(raw.getImage()
                 .getScaledInstance(tokenSize, tokenSize, Image.SCALE_SMOOTH));
 
@@ -353,8 +353,8 @@ public class BoardLayersListener extends JFrame implements GameView {
     }
 
     @Override
-    public void showActResult(String message) {
-        new gameDialogue.Message(message).show(this, "Action Result");
+    public void showActResult(boolean success, String message) {
+        new gameDialogue.ActResult(success, message).show(this, "Act Result");
     }
 //text should be moved to game dialogue class
     @Override
@@ -367,25 +367,57 @@ public class BoardLayersListener extends JFrame implements GameView {
     }
 
     @Override
+    public void offerGuaranteedAct() {
+        gameDialogue.GuaranteedActDialog.show(this, controller);
+    }
+
+    @Override
+    public void offerMoveToOffice() {
+        boolean move = new gameDialogue.Confirm(
+                "You must be at the Casting Office. Move there now?")
+                .show(this, "Casting Office");
+        if (move) {
+            controller.moveToOfficeAction();
+            showUpgradeForm();
+        }
+    }
+
+    @Override
+    public void showUpgradeForm() {
+        String[] result = new gameDialogue.Upgrade().show(this, "Upgrade Rank");
+        if (result != null) controller.upgradeAction(result[0], result[1]);
+    }
+
+    @Override
     public void offerUpgrade() {
         log("Upgrade Availible -> Use the Upgrade button.");
     }
 
-    @Override
-    public void showEndGame() {
-        List<Player> players = controller.getPlayers();
-        if (players == null || players.isEmpty())
-            return;
-        Player winner = controller.getBoard().getWinner(players);
-        StringBuilder sb = new StringBuilder("Final Scores:\n");
-        for (Player p : players)
-            sb.append(p == winner ? "* " : "  ")
-                    .append(p.getPlayerName()).append(": ").append(p.playerScore()).append("\n");
-        if (winner != null)
-            sb.append("\n").append(winner.getPlayerName()).append(" wins!");
-        new gameDialogue.Message(sb.toString()).show(this, "Game Over");
+  @Override
+public void showEndGame() {
+
+    List<Player> players = controller.getPlayers();
+    Player winner = controller.getBoard().getWinner(players);
+
+    String msg = "<html><center><b>Final Scores</b><br><br>";
+ msg += "<br><b>Winner: <font color='green'>" + winner.getPlayerName() + "</font></b>";
+    msg += "</center></html>";
+    for (Player p : players) {
+
+        if (p == winner) {
+            msg += "<font color='green'><b>";
+            msg += p.getPlayerName() + ": " + p.playerScore() + " points";
+            msg += "</b></font><br>";
+        } else {
+            msg += p.getPlayerName() + ": " + p.playerScore() + " points<br>";
+        }
+
     }
 
+   
+
+    new gameDialogue.Message(msg).show(this, "Game Over");
+}
     boolean gameConfirm(String title, String msg) {
         return new gameDialogue.Confirm(msg).show(this, title);
     }

@@ -41,7 +41,8 @@ public class ActionPanelView extends JPanel {
         dayLabel = new JLabel("Day 1 / 4", SwingConstants.CENTER);
         dayLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
         dayLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        dayLabel.setForeground(new Color(80, 50, 20)); // dark brown
+        dayLabel.setForeground(new Color(80, 50, 20)); 
+        // dark brown
         add(dayLabel);
         add(Box.createVerticalStrut(4));
 
@@ -69,7 +70,7 @@ public class ActionPanelView extends JPanel {
         // buttons for non wokring players
         moveButton.addActionListener(e -> gameDialogue.MoveDialog.show(parent, controller));
         takeRoleButton.addActionListener(e -> gameDialogue.TakeRoleDialog.show(parent, controller));
-        upgradeButton.addActionListener(e -> gameDialogue.UpgradeDialog.show(parent, controller));
+        upgradeButton.addActionListener(e -> controller.startUpgrade());
         skipButton.addActionListener(e -> controller.skipAction());
         quitButton.addActionListener(e -> {
             // remove player from game if quit
@@ -136,7 +137,7 @@ public class ActionPanelView extends JPanel {
         rehearseButton.setVisible(working);
         moveButton.setVisible(!working);
         takeRoleButton.setVisible(!working && hasScene && canTakeRole);
-        upgradeButton.setVisible(!working && room.getRoomName().equalsIgnoreCase("office"));
+        upgradeButton.setVisible(!working);
         skipButton.setVisible(true);
         quitButton.setVisible(true);
     }
@@ -147,15 +148,32 @@ public class ActionPanelView extends JPanel {
         dayLabel.setText("Day " + day + " / " + total);
     }
 
-    // button style for action buttons
+    // button style for action buttons with shadow and press effect
     JButton makePanelButton(String text, Color color) {
         JButton btn = gameDialogue.makeButton(text, color);
         btn.setAlignmentX(Component.CENTER_ALIGNMENT);
         btn.setMaximumSize(new Dimension(140, 34));
         btn.setPreferredSize(new Dimension(140, 34));
+        Color shadow = color.darker().darker();
+        // shadow: thick border on bottom/right
         btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(color, 2),
+                BorderFactory.createMatteBorder(1, 1, 3, 3, shadow),
                 BorderFactory.createEmptyBorder(5, 12, 5, 12)));
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                btn.setBackground(color.darker());
+                // pressed: shift shadow to top/left
+                btn.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createMatteBorder(3, 3, 1, 1, shadow),
+                        BorderFactory.createEmptyBorder(7, 14, 3, 10)));
+            }
+            public void mouseReleased(java.awt.event.MouseEvent e) {
+                btn.setBackground(color);
+                btn.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createMatteBorder(1, 1, 3, 3, shadow),
+                        BorderFactory.createEmptyBorder(5, 12, 5, 12)));
+            }
+        });
         return btn;
     }
 }

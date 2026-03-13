@@ -5,5 +5,9 @@ public interface GameView {
     void offerTakeRole();
     void offerUpgrade();
     void showEndGame();
-     void showActResult(String message);
+     void showActResult(boolean success, String message);
+     void offerGuaranteedAct();
+     void offerMoveToOffice();
+     void showUpgradeForm();
+   
 }
