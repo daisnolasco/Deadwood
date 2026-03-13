@@ -20,6 +20,8 @@ public class BoardLayersListener extends JFrame implements GameView {
     JLabel cardlabel;
     JLabel playerlabel;
     JLabel mLabel;
+    //shot markers
+    private Map<Room, List<JLabel>> shotMarkers = new HashMap<>();
     // face-down cards
     List<JLabel> cardBackLabels = new ArrayList<>();
     Map<Room, JLabel> cardFrontLabels = new HashMap<>();
@@ -154,6 +156,10 @@ public class BoardLayersListener extends JFrame implements GameView {
 
     void placeCardBacks() {
         // Remove old card labels before adding fresh ones
+        for (List<JLabel> lbls : shotMarkers.values())
+            for (JLabel lbl : lbls)
+                bPane.remove(lbl);
+            shotMarkers.clear();
         for (JLabel lbl : cardBackLabels)
             bPane.remove(lbl);
         for (JLabel lbl : cardFrontLabels.values())
@@ -190,6 +196,21 @@ public class BoardLayersListener extends JFrame implements GameView {
             }
 
         }
+        //create shot markers for each set
+        for (Room room : controller.getBoard().getAllSets()) {
+            if (!room.hasActiveScene())
+                continue;
+            List<JLabel> markers = new ArrayList<>();
+            for (int[] pos : room.getShotPositions()) {
+                ImageIcon shotIcon = new ImageIcon(new ImageIcon("Images/shot.png")
+                        .getImage().getScaledInstance(pos[2], pos[3], Image.SCALE_SMOOTH));
+                JLabel shotLabel = new JLabel(shotIcon);
+                shotLabel.setBounds((int)(pos[0] * scale), (int)(pos[1] * scale), pos[2], pos[3]);
+                markers.add(shotLabel);
+                bPane.add(shotLabel, new Integer(3));
+            }
+            shotMarkers.put(room, markers);
+        }
         bPane.revalidate();
         bPane.repaint();
         // set player dice
@@ -211,35 +232,42 @@ public class BoardLayersListener extends JFrame implements GameView {
     void updatePlayerTokens() {
         // Track how many players are placed in each room so far,
 
+        Map<Room, Integer> roomSlot = new HashMap<>();
         List<Player> players = controller.getPlayers();
         for (int i = 0; i < players.size(); i++) {
             Player p = players.get(i);
             JLabel token = playerTokens.get(p);
             if (token == null)
                 continue;
+
+            //update dice icon in case rank changed
             token.setIcon(getDice(p));
+
             Room room = p.getCurrentRoom();
             Role role = p.getCurrentRole();
+
             if (room != null && role != null) {
+                //player is on a role - position at role coordinates
                 int[] pos = getRolePosition(room, role);
                 token.setBounds(pos[0], pos[1], tokenSize, tokenSize);
-            } /*
-               * else if (room != null) {
-               * // Player is in a room but not on a role — grid inside the room
-               * int slot = roomSlot.getOrDefault(room, 0);
-               * roomSlot.put(room, slot + 1);
-               * 
-               * int col = slot % 4; // up to 4 per row
-               * int row = slot / 4; // second row if 5+ players in same room
-               * int x = (int)(room.getX() * scale) + 4 + col * (tokenSize + 2);
-               * int y = (int)(room.getY() * scale) + 4 + row * (tokenSize + 2);
-               * token.setBounds(x, y, tokenSize, tokenSize);
-               * 
-               * }
-               */
-            else {
-                // Fallback: put near top-left of the board
-                token.setBounds(4 + i * (tokenSize + 2), 4, tokenSize, tokenSize);
+            } else if (room != null) {
+                //player in room but not on role - place in grid inside room
+                int slot = roomSlot.getOrDefault(room, 0);
+                roomSlot.put(room, slot + 1);
+
+                //grid parameters: 4 columns, small margin
+                int cols = 4;
+                int margin = 2;
+                int col = slot % cols;
+                int row = slot / cols;
+                //compute position relative to room top left corner
+                int roomX = (int) (room.getX() * scale);
+                int roomY = (int) (room.getY() * scale);
+                int roomW = (int) (room.getW() * scale);
+                int roomH = (int) (room.getH() * scale);
+                int x = roomX + margin + col * (tokenSize + margin);
+                int y = roomY + margin + row * (tokenSize + margin);
+                
             }
         }
         bPane.revalidate();
@@ -312,6 +340,16 @@ public class BoardLayersListener extends JFrame implements GameView {
         updatePlayerTokens(); // move dice tokens to current positions
         playerPanel.refreshPlayers(); // update player stats on the left
         actionPanel.refreshButtons(); // show/hide buttons for current player
+        //update markers
+        for (Room room : controller.getBoard().getAllSets()) {
+            List<JLabel> markers = shotMarkers.get(room);
+            if (markers == null)
+                continue;
+            int shotsLeft = room.getRemainingCounters();
+            for (int i = 0; i < markers.size(); i++) {
+                markers.get(i).setVisible(i < shotsLeft);
+            }
+        }
     }
 
     @Override

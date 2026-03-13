@@ -125,7 +125,7 @@ public class ActionPanelView extends JPanel {
         rehearseButton.setVisible(working);
         moveButton.setVisible(!working);
         takeRoleButton.setVisible(!working && hasScene && canTakeRole);
-        upgradeButton.setVisible(!working);
+        upgradeButton.setVisible(!working && room.getRoomName().equalsIgnoreCase("office"));
         skipButton.setVisible(true);
         quitButton.setVisible(true);
     }

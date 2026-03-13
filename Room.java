@@ -15,6 +15,7 @@ public class Room {
     private int y;
     private int w;
     private int h;
+    private List<int[]> shotPositions = new ArrayList<>();
 
    
 
@@ -87,6 +88,15 @@ public class Room {
         this.y = y;
         this.w = w;
         this.h = h;
+    }
+
+    //shot marker positions
+    public void addShotPosition(int x, int y, int w, int h) {
+        shotPositions.add(new int[]{x, y, w, h});
+    }
+
+    public List<int[]> getShotPositions() {
+        return shotPositions;
     }
 
     public void setCurrentScene(Scene scene) {

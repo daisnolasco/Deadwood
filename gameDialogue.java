@@ -286,13 +286,9 @@ public static class TakeRoleDialog {
 // Checks office, moves if needed, then upgrades
 public static class UpgradeDialog {
     public static void show(JFrame parent, Deadwood controller) {
-        if (!controller.getCurrentPlayer().getCurrentRoom()
-                .getRoomName().equalsIgnoreCase("office")) {
-            boolean move = new Confirm(
-                "You must be at the Casting Office to upgrade. Move there now?")
-                .show(parent, "Upgrade Rank");
-            if (!move) return;
-            controller.moveAction("office");
+        if (!controller.getCurrentPlayer().getCurrentRoom().getRoomName().equalsIgnoreCase("office")) {
+            new Message("You must be in the Casting Office to upgrade.").show(parent, "Cannot Upgrade");
+            return;
         }
         String[] result = new Upgrade().show(parent, "Upgrade Rank");
         if (result != null) controller.upgradeAction(result[0], result[1]);
