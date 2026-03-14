@@ -26,14 +26,11 @@ public class ParseXML {
             return doc;
         } // exception handling
     }
-
     public HashMap<String, Room> readBoardData(Document d) {
         Element root = d.getDocumentElement();
-
         HashMap<String, Room> rooms = new HashMap<>();
         HashMap<String, ArrayList<String>> adjacentMapping = new HashMap<>();
         NodeList sets = root.getElementsByTagName("set");
-
         for (int i = 0; i < sets.getLength(); i++) {
             Node roomNode = sets.item(i);
             if (roomNode.getNodeType() == Node.ELEMENT_NODE) {
@@ -49,14 +46,29 @@ public class ParseXML {
                     int aw = Integer.parseInt(areaEl.getAttribute("w"));
                     int ah = Integer.parseInt(areaEl.getAttribute("h"));
                     room.setArea(ax, ay, aw, ah);
+                    // read shot counter positions from each <take>
+                    NodeList takeNodes = roomElement.getElementsByTagName("take");
+                    for (int t = 0; t < takeNodes.getLength(); t++) {
+                        Node takeNode = takeNodes.item(t);
+                        if (takeNode.getNodeType() == Node.ELEMENT_NODE) {
+                            Element takeElement = (Element) takeNode;
+                            NodeList takeAreas = takeElement.getElementsByTagName("area");
+                            if (takeAreas.getLength() > 0) {
+                                Element takeArea = (Element) takeAreas.item(0);
+                                int tx = Integer.parseInt(takeArea.getAttribute("x"));
+                                int ty = Integer.parseInt(takeArea.getAttribute("y"));
+                                int tw = Integer.parseInt(takeArea.getAttribute("w"));
+                                int th = Integer.parseInt(takeArea.getAttribute("h"));
+                                room.addShotPosition(tx, ty, tw, th);
+                            }
+                        }
+                    }
+
                 }
+
                 rooms.put(roomName, room);
-
-                ;
                 adjacentMapping.put(roomName, new ArrayList<>());
-
                 // getting adjacent rooms
-
                 NodeList children = roomNode.getChildNodes();
                 for (int j = 0; j < children.getLength(); j++) {
                     Node child = children.item(j);
