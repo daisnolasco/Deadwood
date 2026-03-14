@@ -20,7 +20,7 @@ public class BoardLayersListener extends JFrame implements GameView {
     JLabel cardlabel;
     JLabel playerlabel;
     JLabel mLabel;
-    //shot markers
+    // shot markers
     private Map<Room, List<JLabel>> shotMarkers = new HashMap<>();
     // face-down cards
     List<JLabel> cardBackLabels = new ArrayList<>();
@@ -82,8 +82,6 @@ public class BoardLayersListener extends JFrame implements GameView {
         title.setBackground(Color.WHITE);
         title.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
         add(title, BorderLayout.NORTH);
-        
-
         // Create the JLayeredPane to hold the display, cards, dice and buttons
         bPane = new JLayeredPane();
         bPane.setPreferredSize(new Dimension(boardW, boardH));
@@ -101,7 +99,6 @@ public class BoardLayersListener extends JFrame implements GameView {
         // player stats
         playerPanel = new PlayerPanelView(controller, this);
         add(playerPanel, BorderLayout.WEST);
-
         // Create the Menu for action buttons on right panel
         actionPanel = new ActionPanelView(controller, this);
         add(actionPanel, BorderLayout.EAST);
@@ -117,8 +114,7 @@ public class BoardLayersListener extends JFrame implements GameView {
                 BorderFactory.createLineBorder(new Color(120, 30, 30), 2),
                 BorderFactory.createEmptyBorder(5, 12, 5, 12)));
         btnEnd.addActionListener(e -> {
-            boolean confirm = gameConfirm("End Game",
-                    "End the game now and show final scores?");
+            boolean confirm = gameDialogue.EndGameDialog.show(this);
             if (confirm)
                 controller.endAction();
         });
@@ -155,68 +151,78 @@ public class BoardLayersListener extends JFrame implements GameView {
         }
     }
 
+    // scen cards and shot counters displauyed
     void placeCardBacks() {
-        // Remove old card labels before adding fresh ones
-        for (List<JLabel> lbls : shotMarkers.values())
-            for (JLabel lbl : lbls)
+        // remove old shot markers
+        for (List<JLabel> lbls : shotMarkers.values()) {
+            for (JLabel lbl : lbls) {
                 bPane.remove(lbl);
-            shotMarkers.clear();
-        for (JLabel lbl : cardBackLabels)
+            }
+        }
+        shotMarkers.clear();
+        // remove old cards
+        for (JLabel lbl : cardBackLabels) {
             bPane.remove(lbl);
-        for (JLabel lbl : cardFrontLabels.values())
+        }
+        for (JLabel lbl : cardFrontLabels.values()) {
             bPane.remove(lbl);
+        }
         cardBackLabels.clear();
         cardFrontLabels.clear();
+
         ImageIcon backRaw = new ImageIcon("Images/Cardback.png");
+        // place cards
         for (Room room : controller.getBoard().getAllSets()) {
             if (!room.hasActiveScene())
                 continue;
-            // Position and size for card area
             int x = (int) (room.getX() * scale);
             int y = (int) (room.getY() * scale);
             int w = (int) (room.getW() * scale);
             int h = (int) (room.getH() * scale);
+            //flip card if player enters room
             boolean playerHere = !room.getPlayersInRoom().isEmpty();
             if (playerHere && room.getCurrentScene() != null
                     && room.getCurrentScene().getImgPath() != null) {
-                // Flip card
-                ImageIcon frontIcon = new ImageIcon(new ImageIcon("Images/Card/" + room.getCurrentScene().getImgPath())
-                        .getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
+                ImageIcon frontIcon = new ImageIcon(
+                        new ImageIcon("Images/Card/" + room.getCurrentScene().getImgPath())
+                                .getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
                 JLabel front = new JLabel(frontIcon);
                 front.setBounds(x, y, w, h);
                 cardFrontLabels.put(room, front);
-                bPane.add(front, new Integer(2));
-            } else {
-                // Show face-down card back
+                bPane.add(front, Integer.valueOf(2));
+            } else {//keep face down
                 ImageIcon backIcon = new ImageIcon(
                         backRaw.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
                 JLabel back = new JLabel(backIcon);
                 back.setBounds(x, y, w, h);
                 cardBackLabels.add(back);
-                bPane.add(back, new Integer(1));
+                bPane.add(back, Integer.valueOf(1));
             }
-
         }
-        //create shot markers for each set
+        // place shot counters for each room
         for (Room room : controller.getBoard().getAllSets()) {
             if (!room.hasActiveScene())
                 continue;
             List<JLabel> markers = new ArrayList<>();
+            //stores x,y , w and h of 1 shot counyter
             for (int[] pos : room.getShotPositions()) {
-                ImageIcon shotIcon = new ImageIcon(new ImageIcon("Images/shot.png")
-                        .getImage().getScaledInstance(pos[2], pos[3], Image.SCALE_SMOOTH));
-                JLabel shotLabel = new JLabel(shotIcon);
-                shotLabel.setBounds((int)(pos[0] * scale), (int)(pos[1] * scale), pos[2], pos[3]);
+                int x = (int) (pos[0] * scale);
+                int y = (int) (pos[1] * scale);
+                int w = (int) (pos[2] * scale);
+                int h = (int) (pos[3] * scale);
+                ImageIcon rawShot = new ImageIcon("Images/shot.png");
+                Image scaledShot = rawShot.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+                JLabel shotLabel = new JLabel(new ImageIcon(scaledShot));
+                shotLabel.setBounds(x, y, w, h);
                 markers.add(shotLabel);
-                bPane.add(shotLabel, new Integer(4));
+                bPane.add(shotLabel, Integer.valueOf(4));
             }
             shotMarkers.put(room, markers);
-        }
+        }//refresh display
         bPane.revalidate();
         bPane.repaint();
-        // set player dice
-    }
-
+    }// set players to a dice
+//create player token label for each pllayer after set up
     void createPlayerTokens() {
         List<Player> players = controller.getPlayers();
         for (int i = 0; i < players.size(); i++) {
@@ -226,13 +232,12 @@ public class BoardLayersListener extends JFrame implements GameView {
             JLabel token = new JLabel(getDice(p));
             token.setSize(tokenSize, tokenSize);
             playerTokens.put(p, token);
+            //keeping tokens on top layer
             bPane.add(token, new Integer(6 + i));
         }
     }
-
     void updatePlayerTokens() {
         // Track how many players are placed in each room so far,
-
         Map<Room, Integer> roomSlot = new HashMap<>();
         List<Player> players = controller.getPlayers();
         for (int i = 0; i < players.size(); i++) {
@@ -240,28 +245,24 @@ public class BoardLayersListener extends JFrame implements GameView {
             JLabel token = playerTokens.get(p);
             if (token == null)
                 continue;
-
-            //update dice icon in case rank changed
+            // update dice icon in case rank changed
             token.setIcon(getDice(p));
-
             Room room = p.getCurrentRoom();
             Role role = p.getCurrentRole();
-
             if (room != null && role != null) {
-                //player is on a role - position at role coordinates
+                // player is on a role, position at role coordinates
                 int[] pos = getRolePosition(room, role);
                 token.setBounds(pos[0], pos[1], tokenSize, tokenSize);
             } else if (room != null) {
-                //player in room but not on role - place in grid inside room
+                // player in room but not on role ,place in grid inside room
                 int slot = roomSlot.getOrDefault(room, 0);
                 roomSlot.put(room, slot + 1);
-
-                //grid parameters
+                // grid parameters
                 int cols = 4;
                 int margin = 2;
                 int col = slot % cols;
                 int row = slot / cols;
-                //compute position relative to room top left corner
+                //  position relative to room area
                 int roomX = (int) (room.getX() * scale);
                 int roomY = (int) (room.getY() * scale);
                 int roomW = (int) (room.getW() * scale);
@@ -274,20 +275,20 @@ public class BoardLayersListener extends JFrame implements GameView {
         bPane.revalidate();
         bPane.repaint();
     }
-
-    // card postion
+//for testing but should be in room class
+    // return board psotion for player role
     int[] getRolePosition(Room room, Role role) {
         if (role.isStarringRole()) {
             int x = (int) ((room.getX() + role.getRoleX()) * scale);
             int y = (int) ((room.getY() + role.getRoleY()) * scale);
             return new int[] { x, y };
         } else {
+            //cordinates for  extra roles 
             int x = (int) (role.getRoleX() * scale);
             int y = (int) (role.getRoleY() * scale);
             return new int[] { x, y };
         }
     }
-
     // get and set dice for player
     ImageIcon getDice(Player p) {
         String path = "Images/Dice/" + p.getColor() + p.getRank() + ".png";
@@ -296,7 +297,8 @@ public class BoardLayersListener extends JFrame implements GameView {
                 .getScaledInstance(tokenSize, tokenSize, Image.SCALE_SMOOTH));
 
     }
-//set up proccess for getting number of players 
+
+    // set up proccess for getting number of players
     void runSetupDialogs() {
         String[] options = { "2", "3", "4", "5", "6", "7", "8" };
         String choice = new gameDialogue.Select("How many players?", options)
@@ -305,7 +307,7 @@ public class BoardLayersListener extends JFrame implements GameView {
             System.exit(0);
         numPlayers = Integer.parseInt(choice);
         playerNames.clear();
-        //get names 
+        // get names
         for (int i = 1; i <= numPlayers; i++) {
             String name = null;
             while (name == null || name.trim().isEmpty()) {
@@ -319,7 +321,6 @@ public class BoardLayersListener extends JFrame implements GameView {
             }
             playerNames.add(name.trim());
         }
-    
         controller.setNumPlayers(numPlayers);
         controller.setupGame(playerNames);
         createPlayerTokens();
@@ -340,7 +341,7 @@ public class BoardLayersListener extends JFrame implements GameView {
         updatePlayerTokens(); // move dice tokens to current positions
         playerPanel.refreshPlayers(); // update player stats on the left
         actionPanel.refreshButtons(); // show/hide buttons for current player
-        //update markers
+        // update markers
         for (Room room : controller.getBoard().getAllSets()) {
             List<JLabel> markers = shotMarkers.get(room);
             if (markers == null)
@@ -351,26 +352,27 @@ public class BoardLayersListener extends JFrame implements GameView {
             }
         }
     }
-
+//act result popup 
     @Override
     public void showActResult(boolean success, String message) {
         new gameDialogue.ActResult(success, message).show(this, "Act Result");
     }
-//text should be moved to game dialogue class
+
+    // text should be moved to game dialogue class
     @Override
     public void offerTakeRole() {
         boolean want = new gameDialogue.Confirm(
                 "You moved to a set with available roles. Take a role now?")
                 .show(this, "Take Role?");
         if (want)
-            gameDialogue.TakeRoleDialog.show(this, controller); 
+            gameDialogue.TakeRoleDialog.show(this, controller);
     }
-
+//guarteed act
     @Override
     public void offerGuaranteedAct() {
         gameDialogue.GuaranteedActDialog.show(this, controller);
     }
-
+//move to office if they arent curently there
     @Override
     public void offerMoveToOffice() {
         boolean move = new gameDialogue.Confirm(
@@ -381,69 +383,45 @@ public class BoardLayersListener extends JFrame implements GameView {
             showUpgradeForm();
         }
     }
-
+//upgrade options
     @Override
     public void showUpgradeForm() {
         String[] result = new gameDialogue.Upgrade().show(this, "Upgrade Rank");
-        if (result != null) controller.upgradeAction(result[0], result[1]);
+        if (result != null)
+            controller.upgradeAction(result[0], result[1]);
     }
 
     @Override
     public void offerUpgrade() {
         log("Upgrade Availible -> Use the Upgrade button.");
     }
+//using html to display final scores and winner
+    @Override
+    public void showEndGame() {
+        List<Player> players = controller.getPlayers();
+        Player winner = controller.getBoard().getWinner(players);
+        String msg = "<html><center><b>Final Scores</b><br><br>";
+        msg += "<br><b>Winner: <font color='green'>" + winner.getPlayerName() + "</font></b>";
+        msg += "</center></html>";
+        for (Player p : players) {
 
-  @Override
-public void showEndGame() {
+            if (p == winner) {
+                msg += "<font color='green'><b>";
+                msg += p.getPlayerName() + ": " + p.playerScore() + " points";
+                msg += "</b></font><br>";
+            } else {
+                msg += p.getPlayerName() + ": " + p.playerScore() + " points<br>";
+            }
 
-    List<Player> players = controller.getPlayers();
-    Player winner = controller.getBoard().getWinner(players);
-
-    String msg = "<html><center><b>Final Scores</b><br><br>";
- msg += "<br><b>Winner: <font color='green'>" + winner.getPlayerName() + "</font></b>";
-    msg += "</center></html>";
-    for (Player p : players) {
-
-        if (p == winner) {
-            msg += "<font color='green'><b>";
-            msg += p.getPlayerName() + ": " + p.playerScore() + " points";
-            msg += "</b></font><br>";
-        } else {
-            msg += p.getPlayerName() + ": " + p.playerScore() + " points<br>";
         }
-
+        new gameDialogue.Message(msg).show(this, "Game Over");
     }
 
-   
-
-    new gameDialogue.Message(msg).show(this, "Game Over");
-}
-    boolean gameConfirm(String title, String msg) {
-        return new gameDialogue.Confirm(msg).show(this, title);
-    }
-
-    String gameSelect(String title, String prompt, String[] opts) {
-        return new gameDialogue.Select(prompt, opts).show(this, title);
-    }
-
-    String gameInput(String title, String prompt) {
-        return new gameDialogue.Input(prompt).show(this, title);
-    }
-
-    void gameMessage(String title, String msg) {
-        new gameDialogue.Message(msg).show(this, title);
-    }
-
-    String[] gameUpgrade() {
-        return new gameDialogue.Upgrade().show(this, "Upgrade Rank");
-    }
-
-    // deadwood  theme
+    // deadwood  color theme for swing dialog and components 
     void applyTheme() {
         Color parchment = new Color(210, 190, 160);
         Color darkBrown = new Color(80, 50, 20);
         Color btnColor = new Color(160, 120, 70);
-
         UIManager.put("OptionPane.background", parchment);
         UIManager.put("OptionPane.messageForeground", darkBrown);
         UIManager.put("Panel.background", parchment);

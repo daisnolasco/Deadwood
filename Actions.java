@@ -279,41 +279,43 @@ public class Actions {
     board.removeScene(room);
     return payoutInfo;
 }
-
-   public String payOut(Room room, Scene scene) {
+public String payOut(Room room, Scene scene) {
     StringBuilder sb = new StringBuilder();
 
     int budget = scene.getMovieBudget();
     int[] bonusDice = rollBonusDice(budget);
-    List<Role> starringRoles = scene.getStarRoles();
-    boolean onCard = false;
 
-    for (Role r : starringRoles) {
+    // only keep star roles that actually have a player on them
+    List<Role> occupiedStarRoles = new ArrayList<>();
+    for (Role r : scene.getStarRoles()) {
         if (r.getAssignedPlayer() != null) {
-            onCard = true;
-            break;
+            occupiedStarRoles.add(r);
         }
     }
 
-    if (!starringRoles.isEmpty() && onCard) {
-        int numRoles = starringRoles.size();
+    // pay bonus dice only to occupied star roles
+    if (!occupiedStarRoles.isEmpty()) {
+        int numRoles = occupiedStarRoles.size();
+
         for (int i = 0; i < budget; i++) {
-            Role role = starringRoles.get(i % numRoles);
+            Role role = occupiedStarRoles.get(i % numRoles);
             Player p = role.getAssignedPlayer();
-            if (p != null) {
-                int bonus = bonusDice[i];
-                p.addDollars(bonus);
-                String msg = p.getPlayerName() + " (star role) gets $" + bonus;
-                System.out.println(msg);
-                sb.append(msg).append("\n");
-            }
+
+            int bonus = bonusDice[i];
+            p.addDollars(bonus);
+
+            String msg = p.getPlayerName() + " (star role) gets $" + bonus;
+            System.out.println(msg);
+            sb.append(msg).append("\n");
         }
     }
 
+    // pay extra roles their rank in dollars
     for (Role r : room.getExtraRole()) {
         Player p = r.getAssignedPlayer();
         if (p != null) {
             p.addDollars(r.getRequiredRank());
+
             String msg = p.getPlayerName() + " (extra role) gets $" + r.getRequiredRank();
             System.out.println(msg);
             sb.append(msg).append("\n");

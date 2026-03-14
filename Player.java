@@ -135,11 +135,9 @@ public char getColor() {
       roleName = currentRole.getRoleName();
     }
 
-    return "Name: " + playerName        + "\nColor: " + color
-        + "\nRank: " + rank
-        + "\nDollars: " + dollars
-        + "\nCredits: " + credits
-        + "\nRehearsal: " + rehearsalTokens
+    return "Rank: " + rank
+        + "\n$" + dollars + "  |  " + credits + " credits"
+        + "\nTokens: " + rehearsalTokens
         + "\nRoom: " + roomName
         + "\nRole: " + roleName;
   }public void displayPlayerInfo() {

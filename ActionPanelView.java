@@ -41,7 +41,7 @@ public class ActionPanelView extends JPanel {
         dayLabel = new JLabel("Day 1 / 4", SwingConstants.CENTER);
         dayLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
         dayLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        dayLabel.setForeground(new Color(80, 50, 20)); 
+        dayLabel.setForeground(new Color(80, 50, 20));
         // dark brown
         add(dayLabel);
         add(Box.createVerticalStrut(4));
@@ -75,8 +75,7 @@ public class ActionPanelView extends JPanel {
         quitButton.addActionListener(e -> {
             // remove player from game if quit
             String name = controller.getCurrentPlayer().getPlayerName();
-            boolean confirm = parent.gameConfirm("Quit",
-                    "Remove " + name + " from the game?");
+            boolean confirm =  gameDialogue.EndGameDialog.show(parent);
             if (confirm)
                 controller.quitAction();
         });
@@ -142,6 +141,7 @@ public class ActionPanelView extends JPanel {
         quitButton.setVisible(true);
     }
 
+    // update day on display
     private void updateDayDisplay() {
         int day = controller.getBoard().getDayCount();
         int total = controller.getTotalDays();
@@ -155,22 +155,22 @@ public class ActionPanelView extends JPanel {
         btn.setMaximumSize(new Dimension(140, 34));
         btn.setPreferredSize(new Dimension(140, 34));
         Color shadow = color.darker().darker();
-        // shadow: thick border on bottom/right
+        // thick border on bottom/right
         btn.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 1, 3, 3, shadow),
                 BorderFactory.createEmptyBorder(5, 12, 5, 12)));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent e) {
                 btn.setBackground(color.darker());
-                // pressed: shift shadow to top/left
+                // shadow to top/left
                 btn.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createMatteBorder(3, 3, 1, 1, shadow),
                         BorderFactory.createEmptyBorder(7, 14, 3, 10)));
             }
+
             public void mouseReleased(java.awt.event.MouseEvent e) {
                 btn.setBackground(color);
-                btn.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createMatteBorder(1, 1, 3, 3, shadow),
+                btn.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 1, 3, 3, shadow),
                         BorderFactory.createEmptyBorder(5, 12, 5, 12)));
             }
         });

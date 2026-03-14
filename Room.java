@@ -120,15 +120,27 @@ public class Room {
 //scene is complete and removed
     public void removeScene() {
         if (currentScene != null) {
-            currentScene.resetScene();
+        // clear players from star roles
+        for (Role role : currentScene.getStarRoles()) {
+            Player p = role.getAssignedPlayer();
+            if (p != null) {
+                p.setCurrentRole(null);
+                role.removePlayerFromRole();
+            }
         }
-        this.remainingShots = 0;
-        this.currentScene = null;
-        //working players role  set to null when scene is complete
-        for (Player player : playersInRoom) {
-            player.setCurrentRole(null);
 
+        currentScene.resetScene();
+    }// clear players from extra roles
+    for (Role role : extraroles) {
+        Player p = role.getAssignedPlayer();
+        if (p != null) {
+            p.setCurrentRole(null);
+            role.removePlayerFromRole();
         }
+    }
+
+    this.remainingShots = 0;
+    this.currentScene = null;
 
     }
 
